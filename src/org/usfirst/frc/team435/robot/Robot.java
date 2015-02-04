@@ -96,7 +96,6 @@ public class Robot extends IterativeRobot {
 	public void teleopPeriodic() {
 		drive.mecanumDrive_Cartesian(calc(driveStick.getX()),
 				calc(driveStick.getY()), calc(driveStick.getTwist()), 0); //Drive Mechanums
-		//funnelLeft.set(shmoStick.getRawAxis(1));
 		
 	}
 
