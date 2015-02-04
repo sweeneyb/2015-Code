@@ -63,7 +63,7 @@ public class Robot extends IterativeRobot {
 	 * This function is called periodically during autonomous
 	 */
 	public void autonomousPeriodic() {
-		AutoChoice test = AutoChoice.DRIVE_FORWARD;
+		AutoChoice test = AutoChoice.PICK_UP_TOTE;
 		switch (test) {
 		case DRIVE_FORWARD:
 			if (counter < 25) {
