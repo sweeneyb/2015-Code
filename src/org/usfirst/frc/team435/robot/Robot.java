@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Talon;
+
 //import edu.wpi.first.wpilibj.vision.USBCamera;
 
 /**
@@ -21,9 +22,10 @@ import edu.wpi.first.wpilibj.Talon;
  */
 public class Robot extends IterativeRobot {
 	enum AutoChoice {
-		DRIVE_FORWARD, PICK_UP_TOTE, PICK_UP_TOTE_TRASH, PICK_UP_TOTES, PICK_UP_RECYCLE_MIDDLE, PICK_UP_TOTES_VISION
+		DRIVE_FORWARD, PICK_UP_TOTE, PICK_UP_TOTE_TRASH, PICK_UP_TOTES, PICK_UP_RECYCLE_MIDDLE, PICK_UP_TOTES_VISION, PICK_UP_ALL
 	};
-//	USBCamera camera;
+
+	// USBCamera camera;
 	RobotDrive drive;
 	Jaguar frontLeft, frontRight;
 	Talon backLeft, backRight, lift;
@@ -32,6 +34,8 @@ public class Robot extends IterativeRobot {
 	Joystick driveStick, shmoStick;
 	DigitalInput upperLimit, lowerLimit;
 	int counter;
+	int stage;
+	boolean taskdone;
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -53,9 +57,16 @@ public class Robot extends IterativeRobot {
 		upperLimit = new DigitalInput(0);
 		lowerLimit = new DigitalInput(1);
 		drive = new RobotDrive(frontLeft, backLeft, frontRight, backRight);
-//		camera = new USBCamera();
-		
-//		camera.openCamera();
+		// camera = new USBCamera();
+
+		// camera.openCamera();
+
+	}
+
+	@Override
+	public void autonomousInit() {
+		counter = 0;
+		stage = 0;
 
 	}
 
@@ -71,7 +82,6 @@ public class Robot extends IterativeRobot {
 			}
 			drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 			break;
-
 		case PICK_UP_TOTE:
 			break;
 
@@ -85,8 +95,54 @@ public class Robot extends IterativeRobot {
 			break;
 
 		case PICK_UP_TOTES_VISION:
-//			camera.startCapture();
+			// camera.startCapture();
 			break;
+		case PICK_UP_ALL:
+			if (counter == 0) {
+				// turn funnel on
+			}
+			if (stage == 0 && counter <= 1 * 50) {
+				drive.mecanumDrive_Cartesian(0, -.5, 0, 0);
+				counter++;
+			} else {
+				if (stage == 0 && counter == 1 * 50 + 1) {
+					counter = 0;
+					stage++;
+				}
+			}
+			if (stage == 1 && taskdone == false) {
+				// lift stuff here
+				// taskdone = true;
+			} else {
+				if (stage == 1 && taskdone == true) {
+					stage++;
+					counter = 0;
+				}
+			}
+			if (stage == 2 && counter <= 4.5 * 50) {
+				drive.mecanumDrive_Cartesian(-.5, 0, 0, 0);
+				counter++;
+			} else {
+				if (stage == 2 && counter == 2 * 50 + 1) {
+					stage++;
+					counter = 0;
+
+				}
+				if (stage == 3 && taskdone == false) {
+					// drop stuff here
+					// taskdone = true;
+
+				} else {
+					if (stage == 7 && taskdone == true) {
+						taskdone = false;
+						stage++;
+					}
+				}
+				if (stage == 4 && counter <= 1.768 * 50) {
+					drive.mecanumDrive_Cartesian(0, .5, 0, 0);
+				}
+				break;
+			}
 		}
 	}
 
@@ -95,8 +151,9 @@ public class Robot extends IterativeRobot {
 	 */
 	public void teleopPeriodic() {
 		drive.mecanumDrive_Cartesian(calc(driveStick.getX()),
-				calc(driveStick.getY()), calc(driveStick.getTwist()), 0); //Drive Mechanums
-		
+				calc(driveStick.getY()), calc(driveStick.getTwist()), 0); // Drive
+																			// Mechanums
+
 	}
 
 	/**
