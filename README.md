@@ -5,8 +5,8 @@
 |Front right drive|TalonSRX|n/a|1|2|n/a|n/a|n/a|n/a|drive axes|
 |Back left drive|VictorSP|0|n/a|16|n/a|n/a|n/a|n/a|drive axes|
 |Back right drive|TalonSRX|n/a|2|1|n/a|n/a|n/a|n/a|drive axes|
-|Left funnel|Talon SRX|n/a|0|3|n/a|n/a|n/a|n/a|leftstick xbox|
-|Right funnel|Talon SRX|n/a|1|14|n/a|n/a|n/a|n/a|rightstick xbox|
+|Left funnel|Talon|n/a|0|3|n/a|n/a|n/a|n/a|leftstick xbox|
+|Right funnel|Talon|n/a|1|14|n/a|n/a|n/a|n/a|rightstick xbox|
 |Lift|Talon|1|n/a|4|n/a|n/a|n/a|n/a|"up:righttrigger; down:lefttrigger; x|y|b for automated heights"|
 |Left clamp piston|Double Solenoid|n/a|n/a|n/a|0|1|n/a|n/a|a button|
 |Right clamp piston|Double Solenoid|n/a|n/a|n/a|2|3|n/a|n/a|a button|
