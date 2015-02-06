@@ -19,13 +19,16 @@ import edu.wpi.first.wpilibj.VictorSP;
  * directory.
  */
 public class Robot extends IterativeRobot {
-	enum AutoChoice {
-		DRIVE_FORWARD, PICK_UP_TOTE, PICK_UP_TOTE_TRASH, PICK_UP_TOTES, PICK_UP_RECYCLE_MIDDLE, PICK_UP_TOTES_VISION
-	}
-
 	public static final double DEADBAND = .1;
-
-	// USBCamera camera;
+	enum AutoChoice {
+		DRIVE_FORWARD,
+		PICK_UP_TOTE,
+		PICK_UP_TOTE_TRASH,
+		PICK_UP_TOTES,
+		PICK_UP_RECYCLE_MIDDLE,
+		PICK_UP_TOTES_VISION
+	};
+//	USBCamera camera;
 	RobotDrive drive;
 	VictorSP backLeft;
 	CANTalon frontLeft, frontRight, backRight;
