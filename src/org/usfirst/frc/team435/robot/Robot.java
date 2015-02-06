@@ -1,15 +1,14 @@
 package org.usfirst.frc.team435.robot;
 
-import static java.lang.Math.pow;
 import edu.wpi.first.wpilibj.CANTalon;
-import edu.wpi.first.wpilibj.CANTalon.ControlMode;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.IterativeRobot;
-import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.VictorSP;
+
 //import edu.wpi.first.wpilibj.vision.USBCamera;
 
 /**
@@ -22,12 +21,15 @@ import edu.wpi.first.wpilibj.Talon;
 public class Robot extends IterativeRobot {
 	enum AutoChoice {
 		DRIVE_FORWARD, PICK_UP_TOTE, PICK_UP_TOTE_TRASH, PICK_UP_TOTES, PICK_UP_RECYCLE_MIDDLE, PICK_UP_TOTES_VISION
-	};
-//	USBCamera camera;
+	}
+
+	public static final double DEADBAND = .1;
+
+	// USBCamera camera;
 	RobotDrive drive;
-	Jaguar frontLeft, frontRight;
-	Talon backLeft, backRight, lift;
-	CANTalon funnelLeft, funnelRight;
+	VictorSP backLeft;
+	CANTalon frontLeft, frontRight, backRight;
+	Talon funnelLeft, funnelRight, lift;
 	DoubleSolenoid leftClamp, rightClamp;
 	Joystick driveStick, shmoStick;
 	DigitalInput upperLimit, lowerLimit;
@@ -38,14 +40,12 @@ public class Robot extends IterativeRobot {
 	 * used for any initialization code.
 	 */
 	public void robotInit() {
-		frontLeft = new Jaguar(0);
-		frontRight = new Jaguar(1);
-		backLeft = new Talon(2);
-		backRight = new Talon(3);
-		funnelLeft = new CANTalon(0);
-		funnelRight = new CANTalon(1);
-		funnelLeft.changeControlMode(ControlMode.PercentVbus);
-		funnelRight.changeControlMode(ControlMode.PercentVbus);
+		frontLeft = new CANTalon(0);
+		frontRight = new CANTalon(1);
+		backLeft = new VictorSP(0);
+		backRight = new CANTalon(2);
+		funnelLeft = new Talon(0);
+		funnelRight = new Talon(1);
 		leftClamp = new DoubleSolenoid(0, 1);
 		rightClamp = new DoubleSolenoid(2, 3);
 		driveStick = new Joystick(0);
@@ -53,9 +53,9 @@ public class Robot extends IterativeRobot {
 		upperLimit = new DigitalInput(0);
 		lowerLimit = new DigitalInput(1);
 		drive = new RobotDrive(frontLeft, backLeft, frontRight, backRight);
-//		camera = new USBCamera();
-		
-//		camera.openCamera();
+		// camera = new USBCamera();
+
+		// camera.openCamera();
 
 	}
 
@@ -85,7 +85,7 @@ public class Robot extends IterativeRobot {
 			break;
 
 		case PICK_UP_TOTES_VISION:
-//			camera.startCapture();
+			// camera.startCapture();
 			break;
 		}
 	}
@@ -94,9 +94,15 @@ public class Robot extends IterativeRobot {
 	 * This function is called periodically during operator control
 	 */
 	public void teleopPeriodic() {
-		drive.mecanumDrive_Cartesian(calc(driveStick.getX()),
-				calc(driveStick.getY()), calc(driveStick.getTwist()), 0); //Drive Mechanums
-		
+		if (driveStick.getTrigger()) {
+			drive.mecanumDrive_Cartesian(calc(driveStick.getX() / 2),
+					calc(driveStick.getY() / 2),
+					calc(driveStick.getTwist() / 2), 0);
+		} else {
+			drive.mecanumDrive_Cartesian(calc(driveStick.getX()),
+					calc(driveStick.getY()), calc(driveStick.getTwist()), 0);
+		}
+
 	}
 
 	/**
@@ -107,6 +113,11 @@ public class Robot extends IterativeRobot {
 	}
 
 	public double calc(double value) {
-		return pow(value, 3);
+		if (Math.abs(value) < DEADBAND) {
+			return 0;
+		} else {
+			return (value - (Math.abs(value) / value * DEADBAND))
+					/ (1 - DEADBAND);
+		}
 	}
 }
