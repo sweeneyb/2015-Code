@@ -8,12 +8,9 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Talon;
-<<<<<<< HEAD
-
-=======
 import edu.wpi.first.wpilibj.VictorSP;
->>>>>>> master
 //import edu.wpi.first.wpilibj.vision.USBCamera;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -63,14 +60,7 @@ public class Robot extends IterativeRobot {
 		upperLimit = new DigitalInput(0);
 		lowerLimit = new DigitalInput(1);
 		drive = new RobotDrive(frontLeft, backLeft, frontRight, backRight);
-<<<<<<< HEAD
-
 	}
-=======
-		// camera = new USBCamera();
-
-		// camera.openCamera();
->>>>>>> master
 
 	@Override
 	public void autonomousInit() {
@@ -88,14 +78,41 @@ public class Robot extends IterativeRobot {
 			if (counter < 25) {
 				drive.mecanumDrive_Cartesian(0, .5, 0, 0);
 				counter++;
+			} else {
+				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 			}
-			drive.mecanumDrive_Cartesian(0, 0, 0, 0);
+			counter++;
 			break;
 		case PICK_UP_TOTE:
 			if(counter < 25){
 				drive.mecanumDrive_Cartesian(0, .3, 0, 0);
-				funnelLeft.set
+				funnelLeft.set(.5);
+				funnelRight.set(.5);
+			} else if(counter < 40){
+				leftClamp.set(Value.kForward);
+				rightClamp.set(Value.kForward);
+				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
+				funnelLeft.set(0);
+				funnelRight.set(0);
+				lift.set(.5);
+			}else if (counter < 50){
+				lift.set(0);
+				drive.mecanumDrive_Cartesian(-.5, 0, 0, 0);
+			}else if (counter < 65){
+				lift.set(-.5);
+			}else if (counter < 100){
+				lift.set(0);
+				leftClamp.set(Value.kReverse);
+				rightClamp.set(Value.kReverse);
+				funnelLeft.set(-.1);
+				funnelRight.set(-.1);
+				drive.mecanumDrive_Cartesian(0, -.5, 0, 0);
+			} else {
+				funnelLeft.set(0);
+				funnelRight.set(0);
+				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 			}
+			counter++;
 			break;
 
 		case PICK_UP_TOTE_TRASH:
