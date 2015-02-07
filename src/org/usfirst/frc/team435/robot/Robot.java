@@ -56,10 +56,10 @@ public class Robot extends IterativeRobot {
 		backRight = new CANTalon(2);
 		drive = new RobotDrive(frontLeft, backLeft, frontRight, backRight);
 		//funnel Init
-		funnelLeft = new Talon(0);
-		funnelRight = new Talon(1);
+		funnelLeft = new Talon(1);
+		funnelRight = new Talon(2);
 		//lifter Init
-		lift = new Jaguar(2);
+		lift = new Jaguar(3);
 		leftClamp = new DoubleSolenoid(0, 1);
 		rightClamp = new DoubleSolenoid(2, 3);
 		upperLimit = new DigitalInput(0);
