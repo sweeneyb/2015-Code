@@ -81,10 +81,15 @@ public class Robot extends IterativeRobot {
 		case DRIVE_FORWARD:
 			if (counter < 25) {
 				drive.mecanumDrive_Cartesian(0, .5, 0, 0);
+				counter++;
 			}
 			drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 			break;
 		case PICK_UP_TOTE:
+			if(counter < 25){
+				drive.mecanumDrive_Cartesian(0, .3, 0, 0);
+				funnelLeft.set
+			}
 			break;
 
 		case PICK_UP_TOTE_TRASH:
