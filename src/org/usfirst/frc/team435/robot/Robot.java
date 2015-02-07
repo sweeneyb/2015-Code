@@ -1,6 +1,7 @@
 package org.usfirst.frc.team435.robot;
 
 import edu.wpi.first.wpilibj.CANTalon;
+import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.IterativeRobot;
@@ -21,15 +22,12 @@ import edu.wpi.first.wpilibj.VictorSP;
  */
 public class Robot extends IterativeRobot {
 	public static final double DEADBAND = .1;
+
 	enum AutoChoice {
-		DRIVE_FORWARD,
-		PICK_UP_TOTE,
-		PICK_UP_TOTE_TRASH,
-		PICK_UP_TOTES,
-		PICK_UP_RECYCLE_MIDDLE,
-		PICK_UP_TOTES_VISION
+		DRIVE_FORWARD, PICK_UP_TOTE, PICK_UP_TOTE_TRASH, PICK_UP_TOTES, PICK_UP_RECYCLE_MIDDLE, PICK_UP_TOTES_VISION
 	};
-//	USBCamera camera;
+
+	// USBCamera camera;
 	// --Drive Motors--
 	RobotDrive drive;
 	VictorSP backLeft;
@@ -42,32 +40,38 @@ public class Robot extends IterativeRobot {
 	DoubleSolenoid leftClamp, rightClamp;
 	// -- OI --
 	Joystick driveStick, shmoStick;
-	
+	// --Compressor--
+	Compressor compressor;
 	int counter;
+	public boolean lastCompressorButtonState = false;
+	public boolean compressorOn = true;
 
 	/**
 	 * This function is run when the robot is first started up and should be
 	 * used for any initialization code.
 	 */
 	public void robotInit() {
-		//Drive init
+		// Drive init
 		frontLeft = new CANTalon(0);
 		frontRight = new CANTalon(1);
 		backLeft = new VictorSP(0);
 		backRight = new CANTalon(2);
 		drive = new RobotDrive(frontLeft, backLeft, frontRight, backRight);
-		//funnel Init
+		// funnel Init
 		funnelLeft = new Jaguar(1);
 		funnelRight = new Jaguar(2);
-		//lifter Init
+		// lifter Init
 		lift = new Talon(3);
 		leftClamp = new DoubleSolenoid(0, 1);
 		rightClamp = new DoubleSolenoid(2, 3);
 		upperLimit = new DigitalInput(0);
 		lowerLimit = new DigitalInput(1);
-		//OI Init
+		// OI Init
 		driveStick = new Joystick(0);
 		shmoStick = new Joystick(1);
+		// Compressor Init
+		compressor = new Compressor();
+		compressor.start();
 		// camera = new USBCamera();
 
 		// camera.openCamera();
@@ -119,10 +123,19 @@ public class Robot extends IterativeRobot {
 		}
 		funnelLeft.set(shmoStick.getRawAxis(2));
 		funnelRight.set(shmoStick.getRawAxis(5));
-		if(shmoStick.getRawAxis(3) > 0){
-			lift.set(-shmoStick.getRawAxis(3));
+		if (shmoStick.getRawAxis(3) > 0) {
+			lift.set(-shmoStick.getRawAxis(2));
 		} else {
-			lift.set(shmoStick.getRawAxis(4)); //THIS NEEDS TO BE FIXED -----------------------------------------------------------------------------------
+			lift.set(shmoStick.getRawAxis(3)); // THIS NEEDS TO BE FIXED
+												// -----------------------------------------------------------------------------------
+		}
+		if (shmoStick.getRawButton(7) && !lastCompressorButtonState ) {
+			if (compressorOn) {
+				compressor.stop();
+			} else {
+				compressor.start();
+			}
+			lastCompressorButtonState = true;
 		}
 	}
 
