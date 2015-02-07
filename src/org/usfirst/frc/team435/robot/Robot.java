@@ -2,15 +2,17 @@ package org.usfirst.frc.team435.robot;
 
 import static java.lang.Math.pow;
 import edu.wpi.first.wpilibj.CANTalon;
-import edu.wpi.first.wpilibj.CANTalon.ControlMode;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.IterativeRobot;
-import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Talon;
+<<<<<<< HEAD
 
+=======
+import edu.wpi.first.wpilibj.VictorSP;
+>>>>>>> master
 //import edu.wpi.first.wpilibj.vision.USBCamera;
 
 /**
@@ -33,9 +35,9 @@ public class Robot extends IterativeRobot {
 
 	// USBCamera camera;
 	RobotDrive drive;
-	Jaguar frontLeft, frontRight;
-	Talon backLeft, backRight, lift;
-	CANTalon funnelLeft, funnelRight;
+	VictorSP backLeft;
+	CANTalon frontLeft, frontRight, backRight;
+	Talon funnelLeft, funnelRight, lift;
 	DoubleSolenoid leftClamp, rightClamp;
 	Joystick driveStick, shmoStick;
 	DigitalInput upperLimit, lowerLimit;
@@ -48,14 +50,12 @@ public class Robot extends IterativeRobot {
 	 * used for any initialization code.
 	 */
 	public void robotInit() {
-		frontLeft = new Jaguar(0);
-		frontRight = new Jaguar(1);
-		backLeft = new Talon(2);
-		backRight = new Talon(3);
-		funnelLeft = new CANTalon(0);
-		funnelRight = new CANTalon(1);
-		funnelLeft.changeControlMode(ControlMode.PercentVbus);
-		funnelRight.changeControlMode(ControlMode.PercentVbus);
+		frontLeft = new CANTalon(0);
+		frontRight = new CANTalon(1);
+		backLeft = new VictorSP(0);
+		backRight = new CANTalon(2);
+		funnelLeft = new Talon(0);
+		funnelRight = new Talon(1);
 		leftClamp = new DoubleSolenoid(0, 1);
 		rightClamp = new DoubleSolenoid(2, 3);
 		driveStick = new Joystick(0);
@@ -63,8 +63,14 @@ public class Robot extends IterativeRobot {
 		upperLimit = new DigitalInput(0);
 		lowerLimit = new DigitalInput(1);
 		drive = new RobotDrive(frontLeft, backLeft, frontRight, backRight);
+<<<<<<< HEAD
 
 	}
+=======
+		// camera = new USBCamera();
+
+		// camera.openCamera();
+>>>>>>> master
 
 	@Override
 	public void autonomousInit() {
