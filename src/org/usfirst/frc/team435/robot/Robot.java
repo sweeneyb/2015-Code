@@ -35,9 +35,9 @@ public class Robot extends IterativeRobot {
 	VictorSP backLeft;
 	CANTalon frontLeft, frontRight, backRight;
 	// --Funnel Components--
-	Talon funnelLeft, funnelRight;
+	Jaguar funnelLeft, funnelRight;
 	// --Lift Components--
-	Jaguar lift;
+	Talon lift;
 	DigitalInput upperLimit, lowerLimit;
 	DoubleSolenoid leftClamp, rightClamp;
 	// -- OI --
@@ -57,10 +57,10 @@ public class Robot extends IterativeRobot {
 		backRight = new CANTalon(2);
 		drive = new RobotDrive(frontLeft, backLeft, frontRight, backRight);
 		//funnel Init
-		funnelLeft = new Talon(1);
-		funnelRight = new Talon(2);
+		funnelLeft = new Jaguar(1);
+		funnelRight = new Jaguar(2);
 		//lifter Init
-		lift = new Jaguar(3);
+		lift = new Talon(3);
 		leftClamp = new DoubleSolenoid(0, 1);
 		rightClamp = new DoubleSolenoid(2, 3);
 		upperLimit = new DigitalInput(0);
