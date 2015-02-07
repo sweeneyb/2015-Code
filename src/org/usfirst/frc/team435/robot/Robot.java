@@ -138,6 +138,27 @@ public class Robot extends IterativeRobot {
 			// camera.startCapture();
 			break;
 		case PICK_UP_ALL:
+			if(counter < 50){
+				drive.mecanumDrive_Cartesian(0, .1, 0, 0);
+				funnelLeft.set(.5);
+				funnelRight.set(.5);
+			} else if(counter < 100){
+				leftClamp.set(Value.kForward);
+				rightClamp.set(Value.kForward);
+				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
+				funnelLeft.set(0);
+				funnelRight.set(0);
+				lift.set(.5);
+			} else if(counter < 150){
+				lift.set(0);
+				drive.mecanumDrive_Cartesian(0, .1, 0, 0);
+				funnelLeft.set(.5);
+				funnelRight.set(.5);
+			} else if(counter < 200){
+				
+			}
+			
+			
 			if (counter == 0) {
 				// turn funnel on
 			}
