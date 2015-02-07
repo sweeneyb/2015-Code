@@ -105,7 +105,13 @@ public class Robot extends IterativeRobot {
 			drive.mecanumDrive_Cartesian(calc(driveStick.getX()),
 					calc(driveStick.getY()), calc(driveStick.getTwist()), 0);
 		}
-
+		funnelLeft.set(shmoStick.getRawAxis(2));
+		funnelRight.set(shmoStick.getRawAxis(5));
+		if(shmoStick.getRawAxis(3) > 0){
+			lift.set(-shmoStick.getRawAxis(3));
+		} else {
+			lift.set(shmoStick.getRawAxis(4)); //THIS NEEDS TO BE FIXED -----------------------------------------------------------------------------------
+		}
 	}
 
 	/**
