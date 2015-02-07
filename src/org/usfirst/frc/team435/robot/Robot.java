@@ -1,6 +1,7 @@
 package org.usfirst.frc.team435.robot;
 
 import static java.lang.Math.pow;
+import edu.wpi.first.wpilibj.Jaguar
 import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
