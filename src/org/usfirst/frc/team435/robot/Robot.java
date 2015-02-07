@@ -1,15 +1,15 @@
 package org.usfirst.frc.team435.robot;
 
-import static java.lang.Math.pow;
-import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.VictorSP;
+
 //import edu.wpi.first.wpilibj.vision.USBCamera;
 
 /**
@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.VictorSP;
  * directory.
  */
 public class Robot extends IterativeRobot {
+	public static final double DEADBAND = .1;
 	enum AutoChoice {
 		DRIVE_FORWARD,
 		PICK_UP_TOTE,
@@ -49,7 +50,7 @@ public class Robot extends IterativeRobot {
 	 * used for any initialization code.
 	 */
 	public void robotInit() {
-		//drive Init
+		//Drive init
 		frontLeft = new CANTalon(0);
 		frontRight = new CANTalon(1);
 		backLeft = new VictorSP(0);
@@ -99,7 +100,7 @@ public class Robot extends IterativeRobot {
 			break;
 
 		case PICK_UP_TOTES_VISION:
-//			camera.startCapture();
+			// camera.startCapture();
 			break;
 		}
 	}
@@ -108,9 +109,21 @@ public class Robot extends IterativeRobot {
 	 * This function is called periodically during operator control
 	 */
 	public void teleopPeriodic() {
-		drive.mecanumDrive_Cartesian(calc(driveStick.getX()),
-				calc(driveStick.getY()), calc(driveStick.getTwist()), 0); //Drive Mechanums
-
+		if (driveStick.getTrigger()) {
+			drive.mecanumDrive_Cartesian(calc(driveStick.getX() / 2),
+					calc(driveStick.getY() / 2),
+					calc(driveStick.getTwist() / 2), 0);
+		} else {
+			drive.mecanumDrive_Cartesian(calc(driveStick.getX()),
+					calc(driveStick.getY()), calc(driveStick.getTwist()), 0);
+		}
+		funnelLeft.set(shmoStick.getRawAxis(2));
+		funnelRight.set(shmoStick.getRawAxis(5));
+		if(shmoStick.getRawAxis(3) > 0){
+			lift.set(-shmoStick.getRawAxis(3));
+		} else {
+			lift.set(shmoStick.getRawAxis(4)); //THIS NEEDS TO BE FIXED -----------------------------------------------------------------------------------
+		}
 	}
 
 	/**
@@ -121,6 +134,11 @@ public class Robot extends IterativeRobot {
 	}
 
 	public double calc(double value) {
-		return pow(value, 3);
+		if (Math.abs(value) < DEADBAND) {
+			return 0;
+		} else {
+			return (value - (Math.abs(value) / value * DEADBAND))
+					/ (1 - DEADBAND);
+		}
 	}
 }
