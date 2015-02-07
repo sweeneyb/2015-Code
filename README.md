@@ -7,7 +7,7 @@
 |Back right drive|TalonSRX|n/a|2|1|n/a|n/a|n/a|n/a|drive axes|
 |Left funnel|Talon|1|n/a|3|n/a|n/a|n/a|n/a|leftstick xbox|
 |Right funnel|Talon|2|n/a|13|n/a|n/a|n/a|n/a|rightstick xbox|
-|Lift|Jaguar|3|n/a|4|n/a|n/a|n/a|n/a|"up:righttrigger; down:lefttrigger; x|y|b for automated heights"|
+|Lift|Jaguar|3|n/a|12|n/a|n/a|n/a|n/a|"up:righttrigger; down:lefttrigger; x|y|b for automated heights"|
 |Left clamp piston|Double Solenoid|n/a|n/a|n/a|0|1|n/a|n/a|a button|
 |Right clamp piston|Double Solenoid|n/a|n/a|n/a|2|3|n/a|n/a|a button|
 |Game controller|X-Box conroller|n/a|n/a|n/a|n/a|n/a|1|n/a|n/a|
