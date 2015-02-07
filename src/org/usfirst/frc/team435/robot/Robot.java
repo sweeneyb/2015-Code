@@ -34,9 +34,9 @@ public class Robot extends IterativeRobot {
 	VictorSP backLeft;
 	CANTalon frontLeft, frontRight, backRight;
 	// --Funnel Components--
-	Talon funnelLeft, funnelRight;
+	Jaguar funnelLeft, funnelRight;
 	// --Lift Components--
-	Jaguar lift;
+	Talon lift;
 	DigitalInput upperLimit, lowerLimit;
 	DoubleSolenoid leftClamp, rightClamp;
 	// -- OI --
