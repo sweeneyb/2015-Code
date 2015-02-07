@@ -1,6 +1,7 @@
 package org.usfirst.frc.team435.robot;
 
 import static java.lang.Math.pow;
+import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
@@ -29,15 +30,19 @@ public class Robot extends IterativeRobot {
 		PICK_UP_TOTES_VISION,
 		PICK_UP_ALL
 	};
-
-	// USBCamera camera;
+	// --Drive Motors--
 	RobotDrive drive;
 	VictorSP backLeft;
 	CANTalon frontLeft, frontRight, backRight;
-	Talon funnelLeft, funnelRight, lift;
-	DoubleSolenoid leftClamp, rightClamp;
-	Joystick driveStick, shmoStick;
+	// --Funnel Components--
+	Talon funnelLeft, funnelRight;
+	// --Lift Components--
+	Jaguar lift;
 	DigitalInput upperLimit, lowerLimit;
+	DoubleSolenoid leftClamp, rightClamp;
+	// -- OI --
+	Joystick driveStick, shmoStick;
+	
 	int counter;
 	int stage;
 	boolean taskdone;
@@ -47,20 +52,25 @@ public class Robot extends IterativeRobot {
 	 * used for any initialization code.
 	 */
 	public void robotInit() {
+		//drive Init
 		frontLeft = new CANTalon(0);
 		frontRight = new CANTalon(1);
 		backLeft = new VictorSP(0);
 		backRight = new CANTalon(2);
-		funnelLeft = new Talon(0);
-		funnelRight = new Talon(1);
+		drive = new RobotDrive(frontLeft, backLeft, frontRight, backRight);
+		//funnel Init
+		funnelLeft = new Talon(1);
+		funnelRight = new Talon(2);
+		//lifter Init
+		lift = new Jaguar(3);
 		leftClamp = new DoubleSolenoid(0, 1);
 		rightClamp = new DoubleSolenoid(2, 3);
-		driveStick = new Joystick(0);
-		shmoStick = new Joystick(1);
 		upperLimit = new DigitalInput(0);
 		lowerLimit = new DigitalInput(1);
-		drive = new RobotDrive(frontLeft, backLeft, frontRight, backRight);
-	}
+		//OI Init
+		driveStick = new Joystick(0);
+		shmoStick = new Joystick(1);
+}
 
 	@Override
 	public void autonomousInit() {
