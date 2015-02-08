@@ -104,7 +104,7 @@ public class Robot extends IterativeRobot {
 				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 				funnelLeft.set(0);
 				funnelRight.set(0);
-				lift.set(.5);
+				lift(.5);
 			}else if (counter < 50){
 				lift.set(0);
 				drive.mecanumDrive_Cartesian(-.5, 0, 0, 0);
@@ -205,6 +205,10 @@ public class Robot extends IterativeRobot {
 				break;
 			}
 		}
+	}
+
+	private void lift(double speed) {
+		lift.set(speed);
 	}
 
 	/**
