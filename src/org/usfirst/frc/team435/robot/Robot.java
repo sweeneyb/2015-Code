@@ -43,8 +43,6 @@ public class Robot extends IterativeRobot {
 	DoubleSolenoid leftClamp, rightClamp;
 	// -- OI --
 	Joystick driveStick, shmoStick;
-	// -- Digital Input --
-	DigitalInput liftTop, liftBottom;
 	
 	int counter;
 	int stage;
@@ -73,9 +71,6 @@ public class Robot extends IterativeRobot {
 		//OI Init
 		driveStick = new Joystick(0);
 		shmoStick = new Joystick(1);
-		//Digital In Init
-		liftTop = new DigitalInput(0);
-		liftBottom = new DigitalInput(1);
 		// camera = new USBCamera();
 	}
 	
