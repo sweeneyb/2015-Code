@@ -30,6 +30,7 @@ public class Robot extends IterativeRobot {
 		PICK_UP_TOTES_VISION,
 		PICK_UP_ALL
 	};
+//	USBCamera camera;
 	// --Drive Motors--
 	RobotDrive drive;
 	VictorSP backLeft;
@@ -42,6 +43,8 @@ public class Robot extends IterativeRobot {
 	DoubleSolenoid leftClamp, rightClamp;
 	// -- OI --
 	Joystick driveStick, shmoStick;
+	// -- Digital Input --
+	DigitalInput liftTop, liftBottom;
 	
 	int counter;
 	int stage;
@@ -70,8 +73,12 @@ public class Robot extends IterativeRobot {
 		//OI Init
 		driveStick = new Joystick(0);
 		shmoStick = new Joystick(1);
-}
-
+		//Digital In Init
+		liftTop = new DigitalInput(0);
+		liftBottom = new DigitalInput(1);
+		// camera = new USBCamera();
+	}
+	
 	@Override
 	public void autonomousInit() {
 		counter = 0;
@@ -87,12 +94,12 @@ public class Robot extends IterativeRobot {
 		case DRIVE_FORWARD:
 			if (counter < 25) {
 				drive.mecanumDrive_Cartesian(0, .5, 0, 0);
-				counter++;
 			} else {
 				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 			}
 			counter++;
 			break;
+
 		case PICK_UP_TOTE:
 			if(counter < 25){
 				drive.mecanumDrive_Cartesian(0, .3, 0, 0);
