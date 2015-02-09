@@ -1,11 +1,11 @@
 package org.usfirst.frc.team435.robot;
 
-import static java.lang.Math.pow;
-import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Talon;
@@ -37,13 +37,42 @@ public class Robot extends IterativeRobot {
 	Jaguar funnelLeft, funnelRight;
 	// --Lift Components--
 	Talon lift;
-	DigitalInput upperLimit, lowerLimit;
+	DigitalInput upperLimit, lowerLimit, stepHeight;
 	DoubleSolenoid leftClamp, rightClamp;
 	// -- OI --
 	Joystick driveStick, shmoStick;
 	
-	int counter;
+	// Variables
+	int counter; // for counting Automode cycles
+	boolean alreadyClicked; // for clamper state holding
+	
+	// Standard Methods
+	public void clamp(){
+		leftClamp.set(Value.kForward);
+		rightClamp.set(Value.kForward);	
+	}
+	
+	public void unclamp(){
+		leftClamp.set(Value.kReverse);
+		rightClamp.set(Value.kReverse);	
+	}
 
+	public void clampClicking(){ // changes the state of the clamp on pressing the a button (a press and release)
+		if(shmoStick.getRawButton(1) && !alreadyClicked){
+			
+			if(leftClamp.get().equals(DoubleSolenoid.Value.kReverse)){
+				clamp();
+			}
+			else{
+				unclamp();
+			}
+			alreadyClicked = true;
+		}
+		// reset the sate of the button
+		else if(!shmoStick.getRawButton(1)){
+			alreadyClicked = false;
+		}
+	}
 	/**
 	 * This function is run when the robot is first started up and should be
 	 * used for any initialization code.
@@ -64,12 +93,17 @@ public class Robot extends IterativeRobot {
 		rightClamp = new DoubleSolenoid(2, 3);
 		upperLimit = new DigitalInput(0);
 		lowerLimit = new DigitalInput(1);
+		stepHeight = new DigitalInput(2);
 		//OI Init
 		driveStick = new Joystick(0);
 		shmoStick = new Joystick(1);
 		// camera = new USBCamera();
 
 		// camera.openCamera();
+		
+		// reset and equalize the clamp solenoids
+		leftClamp.set(Value.kReverse);
+		rightClamp.set(Value.kReverse);
 
 	}
 
@@ -108,9 +142,52 @@ public class Robot extends IterativeRobot {
 	 * This function is called periodically during operator control
 	 */
 	public void teleopPeriodic() {
-		drive.mecanumDrive_Cartesian(calc(driveStick.getX()),
-				calc(driveStick.getY()), calc(driveStick.getTwist()), 0); //Drive Mechanums
-
+		double xdrive = driveStick.getRawAxis(0);
+		double ydrive = driveStick.getRawAxis(1);
+		double twistdrive = driveStick.getRawAxis(2);
+		double funnelLeftOp = shmoStick.getRawAxis(1);
+		double funnelRightOp = shmoStick.getRawAxis(5);
+		
+		
+		// drive Operation
+		if(driveStick.getTrigger()){
+			//half speed
+			drive.mecanumDrive_Cartesian(
+					xdrive * 0.5, 
+					ydrive * 0.5, 
+					twistdrive * 0.5, 
+					0);			
+		}
+		else{
+			drive.mecanumDrive_Cartesian(
+					xdrive, 
+					ydrive, 
+					twistdrive, 
+					0);			
+		}
+		
+		// Funnel Operation
+		funnelLeft.set(funnelLeftOp); // left motor left joystick up/down
+		funnelRight.set(funnelRightOp);// right motor right joystick up/down
+		
+		//Lifter Clamping
+		clampClicking();
+		
+		// Lifter Lifting
+		double up = shmoStick.getRawAxis(3);
+		double down = shmoStick.getRawAxis(4);
+		double threadedRodMult = 1; //multiplier so we don't go up too fast
+		if(!upperLimit.get() && down == 0){
+			lift.set(up*threadedRodMult);
+		}
+		if(!lowerLimit.get() && up == 0){
+			lift.set(down*threadedRodMult);
+		}
+		
+		// lift to step
+		if(shmoStick.getRawButton(2) && !stepHeight.get()){
+			lift.set(.3*threadedRodMult);
+		}
 	}
 
 	/**
@@ -118,9 +195,5 @@ public class Robot extends IterativeRobot {
 	 */
 	public void testPeriodic() {
 
-	}
-
-	public double calc(double value) {
-		return pow(value, 3);
 	}
 }
