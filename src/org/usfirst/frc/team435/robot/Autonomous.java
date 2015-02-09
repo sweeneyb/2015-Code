@@ -23,7 +23,7 @@ public class Autonomous {
 	
 	/**
 	 * This autonomous mode is designed to start out positioned so that the funnel wheels are grabbing a yellow
-	 * tote. 
+	 * tote. It will then pick up the tote and deposit it in the auto zone.
 	 */
 	public static void pickUpTote(){
 		if(counter < 25){
