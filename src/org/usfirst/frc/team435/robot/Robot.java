@@ -24,7 +24,12 @@ public class Robot extends IterativeRobot {
 	public static final double DEADBAND = .1;
 
 	enum AutoChoice {
-		DRIVE_FORWARD, PICK_UP_TOTE, PICK_UP_TOTE_TRASH, PICK_UP_TOTES, PICK_UP_RECYCLE_MIDDLE, PICK_UP_TOTES_VISION
+		DRIVE_FORWARD, 
+		PICK_UP_TOTE, 
+		PICK_UP_TOTE_TRASH, 
+		PICK_UP_TOTES, 
+		PICK_UP_RECYCLE_MIDDLE, 
+		PICK_UP_TOTES_VISION
 	};
 
 	// USBCamera camera;
