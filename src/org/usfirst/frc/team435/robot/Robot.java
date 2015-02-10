@@ -1,6 +1,7 @@
 package org.usfirst.frc.team435.robot;
 
 import edu.wpi.first.wpilibj.CANTalon;
+import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
@@ -41,9 +42,13 @@ public class Robot extends IterativeRobot {
 	DoubleSolenoid leftClamp, rightClamp;
 	// -- OI --
 	Joystick driveStick, shmoStick;
+	// --Compressor--
++	Compressor compressor;
 	
 	// Variables
 	int counter; // for counting Automode cycles
+	public boolean lastCompressorButtonState = false; // Compressor Button State Holding
++	public boolean compressorOn = true; // Compressor State
 	boolean alreadyClicked; // for clamper state holding
 	
 	// Standard Methods
@@ -78,6 +83,10 @@ public class Robot extends IterativeRobot {
 	 * used for any initialization code.
 	 */
 	public void robotInit() {
+		// Compressor Init
+		// Compressor Init
++		compressor = new Compressor();
++		compressor.start();
 		//drive Init
 		frontLeft = new CANTalon(0);
 		frontRight = new CANTalon(1);
@@ -188,6 +197,16 @@ public class Robot extends IterativeRobot {
 		if(shmoStick.getRawButton(2) && !stepHeight.get()){
 			lift.set(.3*threadedRodMult);
 		}
+		
+		// Compressor Toggle
+		if (shmoStick.getRawButton(7) && !lastCompressorButtonState ) {
++			if (compressorOn) {
++				compressor.stop();
++			} else {
++				compressor.start();
++			}
++			lastCompressorButtonState = true;
++		}
 	}
 
 	/**
