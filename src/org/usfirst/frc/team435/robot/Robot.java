@@ -49,7 +49,7 @@ public class Robot extends IterativeRobot {
 	int counter; // for counting Automode cycles
 	public boolean lastCompressorButtonState = false; // Compressor Button State Holding
 +	public boolean compressorOn = true; // Compressor State
-	boolean alreadyClicked; // for clamper state holding
+	boolean alreadyClicked = false; // for clamper state holding
 	
 	// Constants
 	public static final double DEADBAND = .1;
