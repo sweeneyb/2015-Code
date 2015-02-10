@@ -51,7 +51,19 @@ public class Robot extends IterativeRobot {
 +	public boolean compressorOn = true; // Compressor State
 	boolean alreadyClicked; // for clamper state holding
 	
+	// Constants
+	public static final double DEADBAND = .1;
+	
 	// Standard Methods
+	public double calc(double value) { // DEADBAND function
++		if (Math.abs(value) < DEADBAND) {
++			return 0;
++		} else {
++			return (value - (Math.abs(value) / value * DEADBAND))
++					/ (1 - DEADBAND);
++		}
+ 	}
+ 	
 	public void clamp(){
 		leftClamp.set(Value.kForward);
 		rightClamp.set(Value.kForward);	
@@ -162,9 +174,9 @@ public class Robot extends IterativeRobot {
 		if(driveStick.getTrigger()){
 			//half speed
 			drive.mecanumDrive_Cartesian(
-					xdrive * 0.5, 
-					ydrive * 0.5, 
-					twistdrive * 0.5, 
+					calc(xdrive * 0.5), 
+					calc(ydrive * 0.5), 
+					calc(twistdrive * 0.5), 
 					0);			
 		}
 		else{
