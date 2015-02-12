@@ -5,17 +5,15 @@ import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
-import edu.wpi.first.wpilibj.buttons.JoystickButton;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.Talon;
-import edu.wpi.first.wpilibj.VictorSP;
+import edu.wpi.first.wpilibj.buttons.JoystickButton;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 //import edu.wpi.first.wpilibj.vision.USBCamera;
 
@@ -28,7 +26,12 @@ import edu.wpi.first.wpilibj.VictorSP;
  */
 public class Robot extends IterativeRobot {
 	enum AutoChoice {
-		DRIVE_FORWARD, PICK_UP_TOTE, PICK_UP_TOTE_TRASH, PICK_UP_TOTES, PICK_UP_RECYCLE_MIDDLE, PICK_UP_TOTES_VISION
+		DRIVE_FORWARD,
+		PICK_UP_TOTE, 
+		PICK_UP_TOTE_TRASH, 
+		PICK_UP_TOTES, 
+		PICK_UP_RECYCLE_MIDDLE, 
+		PICK_UP_TOTES_VISION
 	};
 
 	// USBCamera camera;
@@ -48,7 +51,7 @@ public class Robot extends IterativeRobot {
 	// --Automode Chooser--
 	SendableChooser autoChooser;
 	// --Joystick Buttons --
-	JoystickButton startCompressor, clamp, stepLift;
+	JoystickButton startCompressor, clampButton, stepLift;
 	// Variables
 	int counter; // for counting Automode cycles
 	public boolean lastCompressorButtonState = false; // Compressor Button State
@@ -91,7 +94,7 @@ public class Robot extends IterativeRobot {
 
 	public void clampClicking() { // changes the state of the clamp on pressing
 									// the a button (a press and release)
-		if (clamp.get() && !alreadyClicked) {
+		if (clampButton.get() && !alreadyClicked) {
 
 			if (leftClamp.get().equals(DoubleSolenoid.Value.kReverse)) {
 				clamp();
@@ -101,7 +104,7 @@ public class Robot extends IterativeRobot {
 			alreadyClicked = true;
 		}
 		// reset the sate of the button
-		else if (!clamp.get()) {
+		else if (!clampButton.get()) {
 			alreadyClicked = false;
 		}
 	}
@@ -111,7 +114,6 @@ public class Robot extends IterativeRobot {
 	 * used for any initialization code.
 	 */
 	public void robotInit() {
-		// Compressor Init
 		// Compressor Init
 		compressor = new Compressor();
 		compressor.start();
@@ -153,7 +155,7 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putData("Autonomous Choices", autoChooser);
 
 		// Joystick Buttons
-		clamp = new JoystickButton(shmoStick, 0);
+		clampButton = new JoystickButton(shmoStick, 0);
 		startCompressor = new JoystickButton(shmoStick, 7);
 		stepLift = new JoystickButton(shmoStick, 1);
 	}
@@ -239,6 +241,7 @@ public class Robot extends IterativeRobot {
 			}
 			lastCompressorButtonState = true;
 		}
+		updateDashboard();
 	}
 
 	/**
@@ -267,7 +270,7 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Funnel Right Axis", shmoStick.getRawAxis(5));
 		SmartDashboard.putNumber("Lift Up", shmoStick.getRawAxis(4));
 		SmartDashboard.putNumber("Lift Down", shmoStick.getRawAxis(5));
-		SmartDashboard.putBoolean("Clamp Button", clamp.get());
+		SmartDashboard.putBoolean("Clamp Button", clampButton.get());
 		SmartDashboard.putBoolean("Compressor Button", startCompressor.get());
 		SmartDashboard.putBoolean("Lift to step button", stepLift.get());
 		
