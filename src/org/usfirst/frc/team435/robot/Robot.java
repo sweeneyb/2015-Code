@@ -1,6 +1,5 @@
 package org.usfirst.frc.team435.robot;
 
-import static org.usfirst.frc.team435.robot.Autonomous.*;
 import static java.lang.Math.pow;
 import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.CANTalon;
@@ -33,21 +32,21 @@ public class Robot extends IterativeRobot {
 	};
 //	USBCamera camera;
 	// --Drive Motors--
-	public static RobotDrive drive;
-	public static VictorSP backLeft;
-	public static CANTalon frontLeft, frontRight, backRight;
+	RobotDrive drive;
+	VictorSP backLeft;
+	CANTalon frontLeft, frontRight, backRight;
 	// --Funnel Components--
-	public static Jaguar funnelLeft, funnelRight;
+	Jaguar funnelLeft, funnelRight;
 	// --Lift Components--
-	public static Talon lift;
-	public static DigitalInput upperLimit, lowerLimit;
-	public static DoubleSolenoid leftClamp, rightClamp;
+	Talon lift;
+	DigitalInput upperLimit, lowerLimit;
+	DoubleSolenoid leftClamp, rightClamp;
 	// -- OI --
-	public static Joystick driveStick, shmoStick;
+	Joystick driveStick, shmoStick;
 	
-	public static int counter;
-	public static int stage;
-	public static boolean taskdone;
+	int counter;
+	int stage;
+	boolean taskdone;
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -88,10 +87,50 @@ public class Robot extends IterativeRobot {
 		AutoChoice test = AutoChoice.PICK_UP_TOTE;
 		switch (test) {
 		case DRIVE_FORWARD:
-			driveForward();
+			if (counter < 25) {
+				drive.mecanumDrive_Cartesian(0, .5, 0, 0);
+			} else {
+				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
+			}
+			counter++;
 			break;
+
 		case PICK_UP_TOTE:
-			pickUpTote();
+			if(counter < 25){
+				drive.mecanumDrive_Cartesian(0, .3, 0, 0);
+				funnelLeft.set(.5);
+				funnelRight.set(.5);
+			} else if(counter < 40){
+				leftClamp.set(Value.kForward);
+				rightClamp.set(Value.kForward);
+				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
+				funnelLeft.set(0);
+				funnelRight.set(0);
+				lift(.5);
+				if(upperLimit.get()){
+					counter = 39;
+				}
+			}else if (counter < 50){
+				lift.set(0);
+				drive.mecanumDrive_Cartesian(-.5, 0, 0, 0);
+			}else if (counter < 65){
+				lift.set(-.5);
+				if(lowerLimit.get()){
+					counter = 64;
+				}
+			}else if (counter < 100){
+				lift.set(0);
+				leftClamp.set(Value.kReverse);
+				rightClamp.set(Value.kReverse);
+				funnelLeft.set(-.1);
+				funnelRight.set(-.1);
+				drive.mecanumDrive_Cartesian(0, -.5, 0, 0);
+			} else {
+				funnelLeft.set(0);
+				funnelRight.set(0);
+				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
+			}
+			counter++;
 			break;
 
 		case PICK_UP_TOTE_TRASH:
@@ -176,7 +215,7 @@ public class Robot extends IterativeRobot {
 		}
 	}
 
-	public static void lift(double speed) {
+	private void lift(double speed) {
 		if((speed < 0 && lowerLimit.get()) || (speed > 0 && upperLimit.get())){
 			return;
 		}
