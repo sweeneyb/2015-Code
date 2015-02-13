@@ -24,11 +24,11 @@ public class Robot extends IterativeRobot {
 	public static final double DEADBAND = .1;
 
 	enum AutoChoice {
-		DRIVE_FORWARD, 
-		PICK_UP_TOTE, 
-		PICK_UP_TOTE_TRASH, 
-		PICK_UP_TOTES, 
-		PICK_UP_RECYCLE_MIDDLE, 
+		DRIVE_FORWARD,
+		PICK_UP_TOTE,
+		PICK_UP_TOTE_TRASH,
+		PICK_UP_TOTES,
+		PICK_UP_RECYCLE_MIDDLE,
 		PICK_UP_TOTES_VISION
 	};
 
@@ -112,6 +112,7 @@ public class Robot extends IterativeRobot {
 			// camera.startCapture();
 			break;
 		}
+		counter++;
 	}
 
 	/**
@@ -119,12 +120,19 @@ public class Robot extends IterativeRobot {
 	 */
 	public void teleopPeriodic() {
 		if (driveStick.getTrigger()) {
-			drive.mecanumDrive_Cartesian(calc(driveStick.getX() / 2),
+			// @formatter:off;
+			drive.mecanumDrive_Cartesian(
+					calc(driveStick.getX() / 2),
 					calc(driveStick.getY() / 2),
-					calc(driveStick.getTwist() / 2), 0);
+					calc(driveStick.getTwist() / 2),
+					0);
 		} else {
-			drive.mecanumDrive_Cartesian(calc(driveStick.getX()),
-					calc(driveStick.getY()), calc(driveStick.getTwist()), 0);
+			drive.mecanumDrive_Cartesian(
+					calc(driveStick.getX()),
+					calc(driveStick.getY()), 
+					calc(driveStick.getTwist()), 
+					0);
+			// @formatter:on;
 		}
 		funnelLeft.set(shmoStick.getRawAxis(2));
 		funnelRight.set(shmoStick.getRawAxis(5));
@@ -134,7 +142,7 @@ public class Robot extends IterativeRobot {
 			lift.set(shmoStick.getRawAxis(3)); // THIS NEEDS TO BE FIXED
 												// -----------------------------------------------------------------------------------
 		}
-		if (shmoStick.getRawButton(7) && !lastCompressorButtonState ) {
+		if (shmoStick.getRawButton(7) && !lastCompressorButtonState) {
 			if (compressorOn) {
 				compressor.stop();
 			} else {
