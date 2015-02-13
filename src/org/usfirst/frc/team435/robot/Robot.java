@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.buttons.JoystickButton;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 //import edu.wpi.first.wpilibj.vision.USBCamera;
 
 /**
@@ -33,6 +34,7 @@ public class Robot extends IterativeRobot {
 		PICK_UP_TOTES_VISION,
 		PICK_UP_ALL
 	};
+
 	static final int LIFTER_UP_AXIS = 3;
 	static final int LIFTER_DOWN_AXIS = 2;
 	static final int FUNNEL_LEFT_AXIS = 1;
@@ -51,8 +53,6 @@ public class Robot extends IterativeRobot {
 	// -- OI --
 	Joystick driveStick, shmoStick;
 
-	int stage;
-	boolean taskdone;
 	// --Compressor--
 	Compressor compressor;
 	// --Automode Chooser--
@@ -61,6 +61,7 @@ public class Robot extends IterativeRobot {
 	JoystickButton startCompressor, clampButton, stepLift;
 	// Variables
 	int counter; // for counting Automode cycles
+	int totesPickedUp; // for counting totes in autonomous mode
 	public boolean lastCompressorButtonState = false; // Compressor Button State
 														// Holding
 	public boolean compressorOn = true; // Compressor State
@@ -69,6 +70,8 @@ public class Robot extends IterativeRobot {
 
 	// Constants
 	public static final double DEADBAND = .1;
+	public static final double AUTO_LIFT_SPEED = .5;
+	public static final double AUTO_FUNNEL_SPEED = .5;
 
 	// Standard Methods
 	public double calc(double value) { // DEADBAND function
@@ -97,6 +100,8 @@ public class Robot extends IterativeRobot {
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
+		counter = 0;
+		totesPickedUp = 0;
 	}
 
 	public void clampClicking() { // changes the state of the clamp on pressing
@@ -182,33 +187,33 @@ public class Robot extends IterativeRobot {
 			} else {
 				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 			}
-			counter++;
 			break;
 
 		case PICK_UP_TOTE:
-			if(counter < 25){
+			if (counter < 25) {
 				drive.mecanumDrive_Cartesian(0, .3, 0, 0);
-				funnelLeft.set(.5);
-				funnelRight.set(.5);
-			} else if(counter < 40){
-				leftClamp.set(Value.kForward);
-				rightClamp.set(Value.kForward);
+				funnelLeft.set(AUTO_FUNNEL_SPEED);
+				funnelRight.set(AUTO_FUNNEL_SPEED);
+			} else if (counter < 40) {
+				clamp();
+			} else if (counter < 50) {
 				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 				funnelLeft.set(0);
 				funnelRight.set(0);
-				lift(.5);
-				if(upperLimit.get()){
+				lift.set(AUTO_LIFT_SPEED);
+				;
+				if (upperLimit.get()) {
 					counter = 39;
 				}
-			}else if (counter < 50){
+			} else if (counter < 60) {
 				lift.set(0);
 				drive.mecanumDrive_Cartesian(-.5, 0, 0, 0);
-			}else if (counter < 65){
-				lift.set(-.5);
-				if(lowerLimit.get()){
+			} else if (counter < 70) {
+				lift.set(-AUTO_LIFT_SPEED);
+				if (lowerLimit.get()) {
 					counter = 64;
 				}
-			}else if (counter < 100){
+			} else if (counter < 110) {
 				lift.set(0);
 				leftClamp.set(Value.kReverse);
 				rightClamp.set(Value.kReverse);
@@ -220,7 +225,6 @@ public class Robot extends IterativeRobot {
 				funnelRight.set(0);
 				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 			}
-			counter++;
 			break;
 
 		case PICK_UP_TOTE_TRASH:
@@ -233,24 +237,47 @@ public class Robot extends IterativeRobot {
 			// camera.startCapture();
 			break;
 		case PICK_UP_ALL:
-			if(counter < 50){
-				drive.mecanumDrive_Cartesian(0, .1, 0, 0);
-				funnelLeft.set(.5);
-				funnelRight.set(.5);
-			} else if(counter < 100){
-				leftClamp.set(Value.kForward);
-				rightClamp.set(Value.kForward);
+			if (counter < 50) {
+				drive.mecanumDrive_Cartesian(0, -.1, 0, 0);
+				funnelLeft.set(AUTO_FUNNEL_SPEED);
+				funnelRight.set(AUTO_FUNNEL_SPEED);
+			} else if (counter < 60) {
+				clamp();
+			} else if (counter < 110) {
 				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 				funnelLeft.set(0);
 				funnelRight.set(0);
-				lift.set(.5);
-			} else if(counter < 150){
+				lift.set(AUTO_LIFT_SPEED);
+				if (upperLimit.get()) {
+					counter = 99;
+				}
+			} else if (counter < 125) {
+				drive.mecanumDrive_Cartesian(.5, 0, 0, 0);
 				lift.set(0);
-				drive.mecanumDrive_Cartesian(0, .1, 0, 0);
-				funnelLeft.set(.5);
-				funnelRight.set(.5);
-			} else if(counter < 200){
-				
+			} else if (counter < 150) {
+				drive.mecanumDrive_Cartesian(0, -.5, 0, 0);
+			} else if (counter < 175) {
+				drive.mecanumDrive_Cartesian(-.5, 0, 0, 0);
+			} else if (counter < 225) {
+				drive.mecanumDrive_Cartesian(0, -.5, 0, 0);
+				funnelLeft.set(AUTO_FUNNEL_SPEED);
+				funnelRight.set(AUTO_FUNNEL_SPEED);
+			} else if (counter < 275) {
+				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
+				funnelLeft.set(0);
+				funnelRight.set(0);
+				lift.set(-AUTO_LIFT_SPEED);
+				if (lowerLimit.get()) {
+					unclamp();
+					totesPickedUp++;
+					if(totesPickedUp>=3){
+						counter = 59;
+					}
+				}
+			} else if (counter < 315) {
+				drive.mecanumDrive_Cartesian(.5, 0, 0, 0);
+			} else {
+				drive.stopMotor();
 			}
 			break;
 		}
@@ -258,7 +285,7 @@ public class Robot extends IterativeRobot {
 	}
 
 	private void lift(double speed) {
-		if((speed < 0 && lowerLimit.get()) || (speed > 0 && upperLimit.get())){
+		if ((speed < 0 && lowerLimit.get()) || (speed > 0 && upperLimit.get())) {
 			return;
 		}
 		lift.set(speed);
