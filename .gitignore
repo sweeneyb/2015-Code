@@ -2,6 +2,6 @@ bin
 .classpath
 .project
 .settings
-dist
 build
+dist
 sysProps.xml

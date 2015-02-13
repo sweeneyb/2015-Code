@@ -30,9 +30,9 @@ public class Robot extends IterativeRobot {
 		DRIVE_FORWARD,
 		PICK_UP_TOTE,
 		PICK_UP_TOTE_TRASH,
-		PICK_UP_TOTES,
 		PICK_UP_RECYCLE_MIDDLE,
-		PICK_UP_TOTES_VISION
+		PICK_UP_TOTES_VISION,
+		PICK_UP_ALL
 	};
 
 	static final int LIFTER_UP_AXIS = 3;
@@ -48,10 +48,11 @@ public class Robot extends IterativeRobot {
 	Jaguar funnelLeft, funnelRight;
 	// --Lift Components--
 	Talon lift;
-	DigitalInput upperLimit, lowerLimit, stepHeight;
+	DigitalInput upperLimit, lowerLimit, stepHeight, toteHeight;
 	DoubleSolenoid leftClamp, rightClamp;
 	// -- OI --
 	Joystick driveStick, shmoStick;
+
 	// --Compressor--
 	Compressor compressor;
 	// --Automode Chooser--
@@ -60,6 +61,7 @@ public class Robot extends IterativeRobot {
 	JoystickButton startCompressor, clampButton, stepLift;
 	// Variables
 	int counter; // for counting Automode cycles
+	int totesPickedUp; // for counting totes in autonomous mode
 	public boolean lastCompressorButtonState = false; // Compressor Button State
 														// Holding
 	public boolean compressorOn = true; // Compressor State
@@ -68,6 +70,8 @@ public class Robot extends IterativeRobot {
 
 	// Constants
 	public static final double DEADBAND = .1;
+	public static final double AUTO_LIFT_SPEED = .5;
+	public static final double AUTO_FUNNEL_SPEED = .5;
 
 	// Standard Methods
 	public double calc(double value) { // DEADBAND function
@@ -79,11 +83,17 @@ public class Robot extends IterativeRobot {
 		}
 	}
 
+	/**
+	 * Engages clamp
+	 */
 	public void clamp() {
 		leftClamp.set(Value.kForward);
 		rightClamp.set(Value.kForward);
 	}
 
+	/**
+	 * Disengages clamp
+	 */
 	public void unclamp() {
 		leftClamp.set(Value.kReverse);
 		rightClamp.set(Value.kReverse);
@@ -96,6 +106,8 @@ public class Robot extends IterativeRobot {
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
+		counter = 0;
+		totesPickedUp = 1;
 	}
 
 	public void clampClicking() { // changes the state of the clamp on pressing
@@ -159,7 +171,7 @@ public class Robot extends IterativeRobot {
 		autoChooser.addObject("Pick up a single tote and a recycle bin",
 				AutoChoice.PICK_UP_TOTE_TRASH);
 		autoChooser.addObject("Pick up all of the totes",
-				AutoChoice.PICK_UP_TOTES);
+				AutoChoice.PICK_UP_ALL);
 
 		SmartDashboard.putData("Autonomous Choices", autoChooser);
 
@@ -167,6 +179,7 @@ public class Robot extends IterativeRobot {
 		clampButton = new JoystickButton(shmoStick, 1);
 		startCompressor = new JoystickButton(shmoStick, 8);
 		stepLift = new JoystickButton(shmoStick, 2);
+		// camera = new USBCamera();
 	}
 
 	/**
@@ -176,18 +189,101 @@ public class Robot extends IterativeRobot {
 		switch (autoMode) {
 		case DRIVE_FORWARD:
 			if (counter < 25) {
-				drive.mecanumDrive_Cartesian(0, .5, 0, 0);
+				drive.mecanumDrive_Cartesian(0, -.5, 0, 0);
+			} else {
+				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 			}
-			drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 			break;
 
 		case PICK_UP_TOTE:
+			if (counter < 25) {
+				drive.mecanumDrive_Cartesian(0, .3, 0, 0);
+				funnelLeft.set(AUTO_FUNNEL_SPEED);
+				funnelRight.set(AUTO_FUNNEL_SPEED);
+			} else if (counter < 40) {
+				clamp();
+			} else if (counter < 50) {
+				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
+				funnelLeft.set(0);
+				funnelRight.set(0);
+				lift.set(AUTO_LIFT_SPEED);
+				;
+				if (upperLimit.get()) {
+					counter = 39;
+				}
+			} else if (counter < 60) {
+				lift.set(0);
+				drive.mecanumDrive_Cartesian(-.5, 0, 0, 0);
+			} else if (counter < 70) {
+				lift.set(-AUTO_LIFT_SPEED);
+				if (lowerLimit.get()) {
+					counter = 64;
+				}
+			} else if (counter < 110) {
+				lift.set(0);
+				leftClamp.set(Value.kReverse);
+				rightClamp.set(Value.kReverse);
+				funnelLeft.set(-.1);
+				funnelRight.set(-.1);
+				drive.mecanumDrive_Cartesian(0, -.5, 0, 0);
+			} else {
+				funnelLeft.set(0);
+				funnelRight.set(0);
+				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
+			}
 			break;
 
 		case PICK_UP_TOTE_TRASH:
-			break;
-
-		case PICK_UP_TOTES:
+			// Positioning: right in front of the recycle bin in line to get the tote
+			// Drive Forward and get recycle
+			if(counter < 25){
+				drive.mecanumDrive_Cartesian(0, -0.5, 0, 0);
+			} else if(counter < 50){
+				drive.mecanumDrive_Cartesian(0,-0.5,0,0);
+				funnelLeft.set(AUTO_FUNNEL_SPEED);
+				funnelRight.set(AUTO_FUNNEL_SPEED);
+			} 
+			// Clamp and lift the bin
+			else if(counter < 100){
+				clamp();
+			} else if(counter < 110 && toteHeight.get()){
+				lift.set(AUTO_LIFT_SPEED);				
+			} 
+			// Drive forwards and funnel the tote
+			else if(counter < 150){
+				drive.mecanumDrive_Cartesian(0, -0.5, 0, 0);
+			} else if(counter < 175){
+				drive.mecanumDrive_Cartesian(0, -0.5, 0, 0);
+				funnelLeft.set(AUTO_FUNNEL_SPEED);
+				funnelRight.set(AUTO_FUNNEL_SPEED);
+			} 
+			// Let go of the bin and bring the lifter down
+			else if(counter < 240){
+				unclamp();
+			} else if(counter < 250 && !lowerLimit.get()){
+				lift.set(-AUTO_LIFT_SPEED);
+				if(lowerLimit.get()){
+					counter = 250;
+				}
+			}
+			// Clamp and lift the tote just high enough to drive with
+			else if(counter < 260){
+				clamp();
+			} else if(counter < 270 && toteHeight.get()){
+				lift.set(AUTO_LIFT_SPEED);
+			} 
+			//Drive to autozone
+			else if(counter < 300){
+				drive.mecanumDrive_Cartesian(0, 0, 1, 0);
+			} else if (counter < 400){
+				drive.mecanumDrive_Cartesian(0, -1, 0, 0);
+			}
+			
+			// setting everything to 0 before the end of the loop
+			lift.set(0);
+			funnelLeft.set(0);
+			funnelRight.set(0);
+			drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 			break;
 
 		case PICK_UP_RECYCLE_MIDDLE:
@@ -196,8 +292,64 @@ public class Robot extends IterativeRobot {
 		case PICK_UP_TOTES_VISION:
 			// camera.startCapture();
 			break;
+		case PICK_UP_ALL:
+			if (counter < 50) {
+				// Funnel the tote
+				drive.mecanumDrive_Cartesian(0, -.1, 0, 0);
+				funnelLeft.set(AUTO_FUNNEL_SPEED);
+				funnelRight.set(AUTO_FUNNEL_SPEED);
+			} else if (counter < 60) {
+				clamp();
+			} else if (counter < 110) {
+				// Lift
+				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
+				funnelLeft.set(0);
+				funnelRight.set(0);
+				lift.set(AUTO_LIFT_SPEED);
+				if (upperLimit.get()) {
+					counter = 99;
+				}
+			} else if (counter < 125) {
+				// Drive around Recycle bin
+				drive.mecanumDrive_Cartesian(.5, 0, 0, 0);
+				lift.set(0);
+			} else if (counter < 150) {
+				drive.mecanumDrive_Cartesian(0, -.5, 0, 0);
+			} else if (counter < 175) {
+				drive.mecanumDrive_Cartesian(-.5, 0, 0, 0);
+			} else if (counter < 225) {
+				// Funnel in another tote
+				drive.mecanumDrive_Cartesian(0, -.5, 0, 0);
+				funnelLeft.set(AUTO_FUNNEL_SPEED);
+				funnelRight.set(AUTO_FUNNEL_SPEED);
+			} else if (counter < 275) {
+				// Make Pick up other tote
+				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
+				funnelLeft.set(0);
+				funnelRight.set(0);
+				lift.set(-AUTO_LIFT_SPEED);
+				if (lowerLimit.get()) {
+					unclamp();
+					totesPickedUp++;
+					if(totesPickedUp>=3){
+						counter = 59;
+					}
+				}
+			} else if (counter < 315) {
+				drive.mecanumDrive_Cartesian(.5, 0, 0, 0);
+			} else {
+				drive.stopMotor();
+			}
+			break;
 		}
 		counter++;
+	}
+
+	private void lift(double speed) {
+		if ((speed < 0 && lowerLimit.get()) || (speed > 0 && upperLimit.get())) {
+			return;
+		}
+		lift.set(speed);
 	}
 
 	/**
