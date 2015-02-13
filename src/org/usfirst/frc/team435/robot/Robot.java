@@ -1,15 +1,20 @@
 package org.usfirst.frc.team435.robot;
 
-import static java.lang.Math.pow;
-import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.CANTalon;
+import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
+import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.Talon;
-import edu.wpi.first.wpilibj.VictorSP;
+import edu.wpi.first.wpilibj.buttons.JoystickButton;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 //import edu.wpi.first.wpilibj.vision.USBCamera;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
@@ -21,6 +26,7 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
  * directory.
  */
 public class Robot extends IterativeRobot {
+
 	enum AutoChoice {
 		DRIVE_FORWARD,
 		PICK_UP_TOTE,
@@ -30,60 +36,148 @@ public class Robot extends IterativeRobot {
 		PICK_UP_TOTES_VISION,
 		PICK_UP_ALL
 	};
+	static final int LIFTER_UP_AXIS = 3;
+	static final int LIFTER_DOWN_AXIS = 2;
+	static final int FUNNEL_LEFT_AXIS = 1;
+	static final int FUNNEL_RIGHT_AXIS = 5;
+
+	// USBCamera camera;
 	// --Drive Motors--
 	RobotDrive drive;
-	VictorSP backLeft;
-	CANTalon frontLeft, frontRight, backRight;
+	SpeedController backLeft, frontLeft, frontRight, backRight;
 	// --Funnel Components--
 	Jaguar funnelLeft, funnelRight;
 	// --Lift Components--
 	Talon lift;
-	DigitalInput upperLimit, lowerLimit;
+	DigitalInput upperLimit, lowerLimit, stepHeight;
 	DoubleSolenoid leftClamp, rightClamp;
 	// -- OI --
 	Joystick driveStick, shmoStick;
-	
-	int counter;
+
 	int stage;
 	boolean taskdone;
+	// --Compressor--
+	Compressor compressor;
+	// --Automode Chooser--
+	SendableChooser autoChooser;
+	// --Joystick Buttons --
+	JoystickButton startCompressor, clampButton, stepLift;
+	// Variables
+	int counter; // for counting Automode cycles
+	public boolean lastCompressorButtonState = false; // Compressor Button State
+														// Holding
+	public boolean compressorOn = true; // Compressor State
+	boolean alreadyClicked = false; // for clamper state holding
+	public AutoChoice autoMode = AutoChoice.DRIVE_FORWARD;
+
+	// Constants
+	public static final double DEADBAND = .1;
+
+	// Standard Methods
+	public double calc(double value) { // DEADBAND function
+		if (Math.abs(value) < DEADBAND) {
+			return 0;
+		} else {
+			return (value - (Math.abs(value) / value * DEADBAND))
+					/ (1 - DEADBAND);
+		}
+	}
+
+	public void clamp() {
+		leftClamp.set(Value.kForward);
+		rightClamp.set(Value.kForward);
+	}
+
+	public void unclamp() {
+		leftClamp.set(Value.kReverse);
+		rightClamp.set(Value.kReverse);
+	}
+
+	@Override
+	public void autonomousInit() {
+		try {
+			autoMode = (AutoChoice) autoChooser.getSelected();
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+	}
+
+	public void clampClicking() { // changes the state of the clamp on pressing
+									// the a button (a press and release)
+		if (clampButton.get() && !alreadyClicked) {
+
+			if (leftClamp.get().equals(DoubleSolenoid.Value.kReverse)) {
+				clamp();
+			} else {
+				unclamp();
+			}
+			alreadyClicked = true;
+		}
+		// reset the sate of the button
+		else if (!clampButton.get()) {
+			alreadyClicked = false;
+		}
+	}
 
 	/**
 	 * This function is run when the robot is first started up and should be
 	 * used for any initialization code.
 	 */
 	public void robotInit() {
-		//drive Init
+		// Compressor Init
+		compressor = new Compressor();
+		compressor.start();
+		// drive Init
 		frontLeft = new CANTalon(0);
 		frontRight = new CANTalon(1);
-		backLeft = new VictorSP(0);
+		backLeft = new CANTalon(3);
 		backRight = new CANTalon(2);
 		drive = new RobotDrive(frontLeft, backLeft, frontRight, backRight);
-		//funnel Init
+		// funnel Init
 		funnelLeft = new Jaguar(1);
 		funnelRight = new Jaguar(2);
-		//lifter Init
+		// lifter Init
 		lift = new Talon(3);
 		leftClamp = new DoubleSolenoid(0, 1);
 		rightClamp = new DoubleSolenoid(2, 3);
 		upperLimit = new DigitalInput(0);
 		lowerLimit = new DigitalInput(1);
-		//OI Init
+		stepHeight = new DigitalInput(2);
+		// OI Init
 		driveStick = new Joystick(0);
 		shmoStick = new Joystick(1);
-}
+		// Compressor Init
+		compressor = new Compressor();
+		compressor.start();
+		// camera = new USBCamera();
 
-	@Override
-	public void autonomousInit() {
-		counter = 0;
-		stage = 0;
+		// camera.openCamera();
+
+		// reset and equalize the clamp solenoids
+		leftClamp.set(Value.kReverse);
+		rightClamp.set(Value.kReverse);
+		autoChooser = new SendableChooser();
+		// Auto Chooser
+		autoChooser.addDefault("Drive forward", AutoChoice.DRIVE_FORWARD);
+		autoChooser.addObject("Pick up a single tote", AutoChoice.PICK_UP_TOTE);
+		autoChooser.addObject("Pick up a single tote and a recycle bin",
+				AutoChoice.PICK_UP_TOTE_TRASH);
+		autoChooser.addObject("Pick up all of the totes",
+				AutoChoice.PICK_UP_TOTES);
+
+		SmartDashboard.putData("Autonomous Choices", autoChooser);
+
+		// Joystick Buttons
+		clampButton = new JoystickButton(shmoStick, 1);
+		startCompressor = new JoystickButton(shmoStick, 8);
+		stepLift = new JoystickButton(shmoStick, 2);
 	}
 
 	/**
 	 * This function is called periodically during autonomous
 	 */
 	public void autonomousPeriodic() {
-		AutoChoice test = AutoChoice.PICK_UP_TOTE;
-		switch (test) {
+		switch (autoMode) {
 		case DRIVE_FORWARD:
 			if (counter < 25) {
 				drive.mecanumDrive_Cartesian(0, .5, 0, 0);
@@ -159,15 +253,71 @@ public class Robot extends IterativeRobot {
 			}
 			break;
 		}
+		counter++;
 	}
 
 	/**
 	 * This function is called periodically during operator control
 	 */
 	public void teleopPeriodic() {
-		drive.mecanumDrive_Cartesian(calc(driveStick.getX()),
-				calc(driveStick.getY()), calc(driveStick.getTwist()), 0); //Drive Mechanums
+		double xdrive = driveStick.getX();
+		double ydrive = driveStick.getY();
+		double twistdrive = driveStick.getZ();
+		double funnelLeftOp = shmoStick.getRawAxis(FUNNEL_LEFT_AXIS);
+		double funnelRightOp = shmoStick.getRawAxis(FUNNEL_RIGHT_AXIS);
 
+		// drive Operation
+		if (driveStick.getTrigger()) {
+			// Half speed
+			// @formatter:off;
+			drive.mecanumDrive_Cartesian(
+					calc(xdrive / 2),
+					calc(ydrive / 2),
+					calc(twistdrive / 2),
+					0);
+		} else {
+			drive.mecanumDrive_Cartesian(
+					calc(xdrive),
+					calc(ydrive), 
+					calc(twistdrive), 
+					0);
+			// @formatter:on;
+		}
+
+		// Funnel Operation
+		funnelLeft.set(funnelLeftOp); // left motor left joystick up/down
+		funnelRight.set(funnelRightOp);// right motor right joystick up/down
+
+		// Lifter Clamping
+		clampClicking();
+
+		// Lifter Lifting
+		double up = shmoStick.getRawAxis(LIFTER_UP_AXIS);
+		double down = shmoStick.getRawAxis(LIFTER_DOWN_AXIS);
+		double threadedRodMult = 1; // multiplier so we don't go up too fast
+		if (!upperLimit.get() && down == 0) {
+			lift.set(up * threadedRodMult);
+		} else if (!lowerLimit.get() && up == 0) {
+			lift.set(down * threadedRodMult * -1.0);
+		} else {
+			lift.set(0);
+		}
+
+		// lift to step
+		if (stepLift.get() && !stepHeight.get()) {
+			lift.set(.3 * threadedRodMult);
+		}
+
+		// Compressor Toggle
+		if (startCompressor.get() && !lastCompressorButtonState) {
+			if (compressorOn) {
+				compressor.stop();
+			} else {
+				compressor.start();
+			}
+			lastCompressorButtonState = true;
+		}
+		// updateDashboard();
 	}
 
 	/**
@@ -177,7 +327,31 @@ public class Robot extends IterativeRobot {
 
 	}
 
-	public double calc(double value) {
-		return pow(value, 3);
+	public void updateDashboard() {
+		SmartDashboard.putBoolean("Upper Limit", upperLimit.get());
+		SmartDashboard.putBoolean("Lower Limit", lowerLimit.get());
+		SmartDashboard.putBoolean("Step Height", stepHeight.get());
+		SmartDashboard.putBoolean("Compressor State", compressor.enabled());
+		SmartDashboard.putNumber("Drive X", driveStick.getX());
+		SmartDashboard.putNumber("Drive Y", driveStick.getY());
+		SmartDashboard.putNumber("Drive Z", driveStick.getZ());
+		SmartDashboard.putNumber("Front Left Drive", frontLeft.get());
+		SmartDashboard.putNumber("Front Right Drive", frontRight.get());
+		SmartDashboard.putNumber("Back Left", backLeft.get());
+		SmartDashboard.putNumber("Back Right", backRight.get());
+		SmartDashboard.putNumber("Funnel Left", funnelLeft.get());
+		SmartDashboard.putNumber("Funnel Right", funnelRight.get());
+		SmartDashboard.putNumber("Lift", lift.get());
+		SmartDashboard.putNumber("Funnel Left Axis",
+				shmoStick.getRawAxis(FUNNEL_LEFT_AXIS));
+		SmartDashboard.putNumber("Funnel Right Axis",
+				shmoStick.getRawAxis(FUNNEL_RIGHT_AXIS));
+		SmartDashboard.putNumber("Lift Up",
+				shmoStick.getRawAxis(LIFTER_UP_AXIS));
+		SmartDashboard.putNumber("Lift Down",
+				shmoStick.getRawAxis(LIFTER_DOWN_AXIS));
+		SmartDashboard.putBoolean("Clamp Button", clampButton.get());
+		SmartDashboard.putBoolean("Compressor Button", startCompressor.get());
+		SmartDashboard.putBoolean("Lift to step button", stepLift.get());
 	}
 }
