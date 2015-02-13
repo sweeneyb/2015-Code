@@ -14,3 +14,4 @@
 |Drive stick|Joystick|n/a|n/a|n/a|n/a|n/a|0|n/a|n/a|
 |Upper Treaded Clicky|Clicky switch|n/a|n/a|n/a|n/a|n/a|n/a|0|RUMBLE!!!!|
 |Lower Threaded Clicky|Clicky Switch|n/a|n/a|n/a|n/a|n/a|n/a|1|RUMBLE!!!!|
+|Step Clicky|Clicky Switch|n/a|n/a|n/a|n/a|n/a|n/a|2|function uses shmo raw button 2|
