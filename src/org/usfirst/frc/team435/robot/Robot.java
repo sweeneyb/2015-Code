@@ -212,6 +212,7 @@ public class Robot extends IterativeRobot {
 
 		// drive Operation
 		if (driveStick.getTrigger()) {
+			// Half speed
 			// @formatter:off;
 			drive.mecanumDrive_Cartesian(
 					calc(xdrive / 2),
