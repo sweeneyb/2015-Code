@@ -35,11 +35,6 @@ public class Robot extends IterativeRobot {
 		PICK_UP_ALL
 	};
 
-	static final int LIFTER_UP_AXIS = 3;
-	static final int LIFTER_DOWN_AXIS = 2;
-	static final int FUNNEL_LEFT_AXIS = 1;
-	static final int FUNNEL_RIGHT_AXIS = 5;
-
 	// USBCamera camera;
 	// --Drive Motors--
 	RobotDrive drive;
@@ -72,6 +67,11 @@ public class Robot extends IterativeRobot {
 	public static final double DEADBAND = .1;
 	public static final double AUTO_LIFT_SPEED = .5;
 	public static final double AUTO_FUNNEL_SPEED = .5;
+	static final int LIFTER_UP_AXIS = 3;
+	static final int LIFTER_DOWN_AXIS = 2;
+	static final int FUNNEL_LEFT_AXIS = 1;
+	static final int FUNNEL_RIGHT_AXIS = 5;
+	static final int THREADED_ROD_MULT = 1; // multiplier so we don't go up too fast
 
 	// Standard Methods
 	public double calc(double value) { // DEADBAND function
@@ -390,18 +390,17 @@ public class Robot extends IterativeRobot {
 		// Lifter Lifting
 		double up = shmoStick.getRawAxis(LIFTER_UP_AXIS);
 		double down = shmoStick.getRawAxis(LIFTER_DOWN_AXIS);
-		double threadedRodMult = 1; // multiplier so we don't go up too fast
 		if (!upperLimit.get() && down == 0) {
-			lift.set(up * threadedRodMult);
+			lift.set(up * THREADED_ROD_MULT);
 		} else if (!lowerLimit.get() && up == 0) {
-			lift.set(down * threadedRodMult * -1.0);
+			lift.set(down * -THREADED_ROD_MULT);
 		} else {
 			lift.set(0);
 		}
 
 		// lift to step
 		if (stepLift.get() && !stepHeight.get()) {
-			lift.set(.3 * threadedRodMult);
+			lift.set(.3 * THREADED_ROD_MULT);
 		}
 
 		// Compressor Toggle
