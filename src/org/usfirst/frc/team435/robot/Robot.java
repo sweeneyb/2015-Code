@@ -83,11 +83,17 @@ public class Robot extends IterativeRobot {
 		}
 	}
 
+	/**
+	 * Engages clamp
+	 */
 	public void clamp() {
 		leftClamp.set(Value.kForward);
 		rightClamp.set(Value.kForward);
 	}
 
+	/**
+	 * Disengages clamp
+	 */
 	public void unclamp() {
 		leftClamp.set(Value.kReverse);
 		rightClamp.set(Value.kReverse);
@@ -101,7 +107,7 @@ public class Robot extends IterativeRobot {
 			t.printStackTrace();
 		}
 		counter = 0;
-		totesPickedUp = 0;
+		totesPickedUp = 1;
 	}
 
 	public void clampClicking() { // changes the state of the clamp on pressing
@@ -238,12 +244,14 @@ public class Robot extends IterativeRobot {
 			break;
 		case PICK_UP_ALL:
 			if (counter < 50) {
+				// Funnel the tote
 				drive.mecanumDrive_Cartesian(0, -.1, 0, 0);
 				funnelLeft.set(AUTO_FUNNEL_SPEED);
 				funnelRight.set(AUTO_FUNNEL_SPEED);
 			} else if (counter < 60) {
 				clamp();
 			} else if (counter < 110) {
+				// Lift
 				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 				funnelLeft.set(0);
 				funnelRight.set(0);
@@ -252,6 +260,7 @@ public class Robot extends IterativeRobot {
 					counter = 99;
 				}
 			} else if (counter < 125) {
+				// Drive around Recycle bin
 				drive.mecanumDrive_Cartesian(.5, 0, 0, 0);
 				lift.set(0);
 			} else if (counter < 150) {
@@ -259,10 +268,12 @@ public class Robot extends IterativeRobot {
 			} else if (counter < 175) {
 				drive.mecanumDrive_Cartesian(-.5, 0, 0, 0);
 			} else if (counter < 225) {
+				// Funnel in another tote
 				drive.mecanumDrive_Cartesian(0, -.5, 0, 0);
 				funnelLeft.set(AUTO_FUNNEL_SPEED);
 				funnelRight.set(AUTO_FUNNEL_SPEED);
 			} else if (counter < 275) {
+				// Make Pick up other tote
 				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 				funnelLeft.set(0);
 				funnelRight.set(0);
