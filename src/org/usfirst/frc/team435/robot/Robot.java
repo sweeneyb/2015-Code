@@ -25,19 +25,20 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * directory.
  */
 public class Robot extends IterativeRobot {
+
 	enum AutoChoice {
 		DRIVE_FORWARD,
-		PICK_UP_TOTE, 
-		PICK_UP_TOTE_TRASH, 
-		PICK_UP_TOTES, 
-		PICK_UP_RECYCLE_MIDDLE, 
+		PICK_UP_TOTE,
+		PICK_UP_TOTE_TRASH,
+		PICK_UP_TOTES,
+		PICK_UP_RECYCLE_MIDDLE,
 		PICK_UP_TOTES_VISION
 	};
-	
-	static final int LIFTER_UP_AXIS=3;
-	static final int LIFTER_DOWN_AXIS=2;
-	static final int FUNNEL_LEFT_AXIS=1;
-	static final int FUNNEL_RIGHT_AXIS=5;
+
+	static final int LIFTER_UP_AXIS = 3;
+	static final int LIFTER_DOWN_AXIS = 2;
+	static final int FUNNEL_LEFT_AXIS = 1;
+	static final int FUNNEL_RIGHT_AXIS = 5;
 
 	// USBCamera camera;
 	// --Drive Motors--
@@ -141,6 +142,9 @@ public class Robot extends IterativeRobot {
 		// OI Init
 		driveStick = new Joystick(0);
 		shmoStick = new Joystick(1);
+		// Compressor Init
+		compressor = new Compressor();
+		compressor.start();
 		// camera = new USBCamera();
 
 		// camera.openCamera();
@@ -193,6 +197,7 @@ public class Robot extends IterativeRobot {
 			// camera.startCapture();
 			break;
 		}
+		counter++;
 	}
 
 	/**
@@ -207,11 +212,20 @@ public class Robot extends IterativeRobot {
 
 		// drive Operation
 		if (driveStick.getTrigger()) {
-			// half speed
-			drive.mecanumDrive_Cartesian(calc(xdrive * 0.5),
-					calc(ydrive * 0.5), calc(twistdrive * 0.5), 0);
+			// Half speed
+			// @formatter:off;
+			drive.mecanumDrive_Cartesian(
+					calc(xdrive / 2),
+					calc(ydrive / 2),
+					calc(twistdrive / 2),
+					0);
 		} else {
-			drive.mecanumDrive_Cartesian(xdrive, ydrive, twistdrive, 0);
+			drive.mecanumDrive_Cartesian(
+					calc(xdrive),
+					calc(ydrive), 
+					calc(twistdrive), 
+					0);
+			// @formatter:on;
 		}
 
 		// Funnel Operation
@@ -227,11 +241,9 @@ public class Robot extends IterativeRobot {
 		double threadedRodMult = 1; // multiplier so we don't go up too fast
 		if (!upperLimit.get() && down == 0) {
 			lift.set(up * threadedRodMult);
-		}else if (!lowerLimit.get() && up == 0) {
+		} else if (!lowerLimit.get() && up == 0) {
 			lift.set(down * threadedRodMult * -1.0);
-		}
-		else
-		{
+		} else {
 			lift.set(0);
 		}
 
@@ -249,14 +261,13 @@ public class Robot extends IterativeRobot {
 			}
 			lastCompressorButtonState = true;
 		}
-		//updateDashboard();
+		// updateDashboard();
 	}
 
 	/**
 	 * This function is called periodically during test mode
 	 */
 	public void testPeriodic() {
-		
 
 	}
 
@@ -275,13 +286,16 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Funnel Left", funnelLeft.get());
 		SmartDashboard.putNumber("Funnel Right", funnelRight.get());
 		SmartDashboard.putNumber("Lift", lift.get());
-		SmartDashboard.putNumber("Funnel Left Axis", shmoStick.getRawAxis(FUNNEL_LEFT_AXIS));
-		SmartDashboard.putNumber("Funnel Right Axis", shmoStick.getRawAxis(FUNNEL_RIGHT_AXIS));
-		SmartDashboard.putNumber("Lift Up", shmoStick.getRawAxis(LIFTER_UP_AXIS));
-		SmartDashboard.putNumber("Lift Down", shmoStick.getRawAxis(LIFTER_DOWN_AXIS));
+		SmartDashboard.putNumber("Funnel Left Axis",
+				shmoStick.getRawAxis(FUNNEL_LEFT_AXIS));
+		SmartDashboard.putNumber("Funnel Right Axis",
+				shmoStick.getRawAxis(FUNNEL_RIGHT_AXIS));
+		SmartDashboard.putNumber("Lift Up",
+				shmoStick.getRawAxis(LIFTER_UP_AXIS));
+		SmartDashboard.putNumber("Lift Down",
+				shmoStick.getRawAxis(LIFTER_DOWN_AXIS));
 		SmartDashboard.putBoolean("Clamp Button", clampButton.get());
 		SmartDashboard.putBoolean("Compressor Button", startCompressor.get());
 		SmartDashboard.putBoolean("Lift to step button", stepLift.get());
-		
 	}
 }
