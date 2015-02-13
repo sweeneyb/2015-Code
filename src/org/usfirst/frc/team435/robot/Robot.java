@@ -157,53 +157,7 @@ public class Robot extends IterativeRobot {
 			} else if(counter < 200){
 				
 			}
-			
-			
-			if (counter == 0) {
-				// turn funnel on
-			}
-			if (stage == 0 && counter <= 1 * 50) {
-				drive.mecanumDrive_Cartesian(0, -.5, 0, 0);
-				counter++;
-			} else {
-				if (stage == 0 && counter == 1 * 50 + 1) {
-					counter = 0;
-					stage++;
-				}
-			}
-			if (stage == 1 && taskdone == false) {
-				// lift stuff here
-				// taskdone = true;
-			} else {
-				if (stage == 1 && taskdone == true) {
-					stage++;
-					counter = 0;
-				}
-			}
-			if (stage == 2 && counter <= 4.5 * 50) {
-				drive.mecanumDrive_Cartesian(-.5, 0, 0, 0);
-				counter++;
-			} else {
-				if (stage == 2 && counter == 2 * 50 + 1) {
-					stage++;
-					counter = 0;
-
-				}
-				if (stage == 3 && taskdone == false) {
-					// drop stuff here
-					// taskdone = true;
-
-				} else {
-					if (stage == 7 && taskdone == true) {
-						taskdone = false;
-						stage++;
-					}
-				}
-				if (stage == 4 && counter <= 1.768 * 50) {
-					drive.mecanumDrive_Cartesian(0, .5, 0, 0);
-				}
-				break;
-			}
+			break;
 		}
 	}
 
