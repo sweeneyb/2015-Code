@@ -14,9 +14,7 @@ import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.buttons.JoystickButton;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
 //import edu.wpi.first.wpilibj.vision.USBCamera;
-import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -171,6 +169,7 @@ public class Robot extends IterativeRobot {
 		clampButton = new JoystickButton(shmoStick, 1);
 		startCompressor = new JoystickButton(shmoStick, 8);
 		stepLift = new JoystickButton(shmoStick, 2);
+		// camera = new USBCamera();
 	}
 
 	/**
@@ -181,12 +180,12 @@ public class Robot extends IterativeRobot {
 		case DRIVE_FORWARD:
 			if (counter < 25) {
 				drive.mecanumDrive_Cartesian(0, .5, 0, 0);
-				counter++;
 			} else {
 				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 			}
 			counter++;
 			break;
+
 		case PICK_UP_TOTE:
 			if(counter < 25){
 				drive.mecanumDrive_Cartesian(0, .3, 0, 0);
@@ -198,12 +197,18 @@ public class Robot extends IterativeRobot {
 				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 				funnelLeft.set(0);
 				funnelRight.set(0);
-				lift.set(.5);
+				lift(.5);
+				if(upperLimit.get()){
+					counter = 39;
+				}
 			}else if (counter < 50){
 				lift.set(0);
 				drive.mecanumDrive_Cartesian(-.5, 0, 0, 0);
 			}else if (counter < 65){
 				lift.set(-.5);
+				if(lowerLimit.get()){
+					counter = 64;
+				}
 			}else if (counter < 100){
 				lift.set(0);
 				leftClamp.set(Value.kReverse);
@@ -254,6 +259,13 @@ public class Robot extends IterativeRobot {
 			break;
 		}
 		counter++;
+	}
+
+	private void lift(double speed) {
+		if((speed < 0 && lowerLimit.get()) || (speed > 0 && upperLimit.get())){
+			return;
+		}
+		lift.set(speed);
 	}
 
 	/**
