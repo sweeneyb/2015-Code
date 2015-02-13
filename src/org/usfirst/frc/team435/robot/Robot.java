@@ -47,7 +47,7 @@ public class Robot extends IterativeRobot {
 	Jaguar funnelLeft, funnelRight;
 	// --Lift Components--
 	Talon lift;
-	DigitalInput upperLimit, lowerLimit, stepHeight;
+	DigitalInput upperLimit, lowerLimit, stepHeight, toteHeight;
 	DoubleSolenoid leftClamp, rightClamp;
 	// -- OI --
 	Joystick driveStick, shmoStick;
@@ -70,6 +70,8 @@ public class Robot extends IterativeRobot {
 
 	// Constants
 	public static final double DEADBAND = .1;
+	public static final double AUTO_LIFT_SPEED = .5;
+	public static final double AUTO_FUNNEL_SPEED =.5;
 
 	// Standard Methods
 	public double calc(double value) { // DEADBAND function
@@ -179,11 +181,10 @@ public class Robot extends IterativeRobot {
 		switch (autoMode) {
 		case DRIVE_FORWARD:
 			if (counter < 25) {
-				drive.mecanumDrive_Cartesian(0, .5, 0, 0);
+				drive.mecanumDrive_Cartesian(0, -.5, 0, 0);
 			} else {
 				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 			}
-			counter++;
 			break;
 
 		case PICK_UP_TOTE:
@@ -221,10 +222,59 @@ public class Robot extends IterativeRobot {
 				funnelRight.set(0);
 				drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 			}
-			counter++;
 			break;
 
 		case PICK_UP_TOTE_TRASH:
+			// Positioning: right in front of the recycle bin in line to get the tote
+			// Drive Forward and get recycle
+			if(counter < 25){
+				drive.mecanumDrive_Cartesian(0, -0.5, 0, 0);
+			} else if(counter < 50){
+				drive.mecanumDrive_Cartesian(0,-0.5,0,0);
+				funnelLeft.set(AUTO_FUNNEL_SPEED);
+				funnelRight.set(AUTO_FUNNEL_SPEED);
+			} 
+			// Clamp and lift the bin
+			else if(counter < 100){
+				clamp();
+			} else if(counter < 110 && toteHeight.get()){
+				lift.set(AUTO_LIFT_SPEED);				
+			} 
+			// Drive forwards and funnel the tote
+			else if(counter < 150){
+				drive.mecanumDrive_Cartesian(0, -0.5, 0, 0);
+			} else if(counter < 175){
+				drive.mecanumDrive_Cartesian(0, -0.5, 0, 0);
+				funnelLeft.set(AUTO_FUNNEL_SPEED);
+				funnelRight.set(AUTO_FUNNEL_SPEED);
+			} 
+			// Let go of the bin and bring the lifter down
+			else if(counter < 240){
+				unclamp();
+			} else if(counter < 250 && !lowerLimit.get()){
+				lift.set(-AUTO_LIFT_SPEED);
+				if(lowerLimit.get()){
+					counter = 250;
+				}
+			}
+			// Clamp and lift the tote just high enough to drive with
+			else if(counter < 260){
+				clamp();
+			} else if(counter < 270 && toteHeight.get()){
+				lift.set(AUTO_LIFT_SPEED);
+			} 
+			//Drive to autozone
+			else if(counter < 300){
+				drive.mecanumDrive_Cartesian(0, 0, 1, 0);
+			} else if (counter < 400){
+				drive.mecanumDrive_Cartesian(0, -1, 0, 0);
+			}
+			
+			// setting everything to 0 before the end of the loop
+			lift.set(0);
+			funnelLeft.set(0);
+			funnelRight.set(0);
+			drive.mecanumDrive_Cartesian(0, 0, 0, 0);
 			break;
 
 		case PICK_UP_TOTES:
