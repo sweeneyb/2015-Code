@@ -33,6 +33,11 @@ public class Robot extends IterativeRobot {
 		PICK_UP_RECYCLE_MIDDLE, 
 		PICK_UP_TOTES_VISION
 	};
+	
+	static final int LIFTER_UP_AXIS=3;
+	static final int LIFTER_DOWN_AXIS=2;
+	static final int FUNNEL_LEFT_AXIS=1;
+	static final int FUNNEL_RIGHT_AXIS=5;
 
 	// USBCamera camera;
 	// --Drive Motors--
@@ -143,7 +148,7 @@ public class Robot extends IterativeRobot {
 		// reset and equalize the clamp solenoids
 		leftClamp.set(Value.kReverse);
 		rightClamp.set(Value.kReverse);
-
+		autoChooser = new SendableChooser();
 		// Auto Chooser
 		autoChooser.addDefault("Drive forward", AutoChoice.DRIVE_FORWARD);
 		autoChooser.addObject("Pick up a single tote", AutoChoice.PICK_UP_TOTE);
@@ -155,9 +160,9 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putData("Autonomous Choices", autoChooser);
 
 		// Joystick Buttons
-		clampButton = new JoystickButton(shmoStick, 0);
-		startCompressor = new JoystickButton(shmoStick, 7);
-		stepLift = new JoystickButton(shmoStick, 1);
+		clampButton = new JoystickButton(shmoStick, 1);
+		startCompressor = new JoystickButton(shmoStick, 8);
+		stepLift = new JoystickButton(shmoStick, 2);
 	}
 
 	/**
@@ -194,11 +199,11 @@ public class Robot extends IterativeRobot {
 	 * This function is called periodically during operator control
 	 */
 	public void teleopPeriodic() {
-		double xdrive = driveStick.getRawAxis(0);
-		double ydrive = driveStick.getRawAxis(1);
-		double twistdrive = driveStick.getRawAxis(2);
-		double funnelLeftOp = shmoStick.getRawAxis(1);
-		double funnelRightOp = shmoStick.getRawAxis(5);
+		double xdrive = driveStick.getX();
+		double ydrive = driveStick.getY();
+		double twistdrive = driveStick.getZ();
+		double funnelLeftOp = shmoStick.getRawAxis(FUNNEL_LEFT_AXIS);
+		double funnelRightOp = shmoStick.getRawAxis(FUNNEL_RIGHT_AXIS);
 
 		// drive Operation
 		if (driveStick.getTrigger()) {
@@ -217,14 +222,17 @@ public class Robot extends IterativeRobot {
 		clampClicking();
 
 		// Lifter Lifting
-		double up = shmoStick.getRawAxis(3);
-		double down = shmoStick.getRawAxis(4);
+		double up = shmoStick.getRawAxis(LIFTER_UP_AXIS);
+		double down = shmoStick.getRawAxis(LIFTER_DOWN_AXIS);
 		double threadedRodMult = 1; // multiplier so we don't go up too fast
 		if (!upperLimit.get() && down == 0) {
 			lift.set(up * threadedRodMult);
+		}else if (!lowerLimit.get() && up == 0) {
+			lift.set(down * threadedRodMult * -1.0);
 		}
-		if (!lowerLimit.get() && up == 0) {
-			lift.set(down * threadedRodMult);
+		else
+		{
+			lift.set(0);
 		}
 
 		// lift to step
@@ -241,13 +249,14 @@ public class Robot extends IterativeRobot {
 			}
 			lastCompressorButtonState = true;
 		}
-		updateDashboard();
+		//updateDashboard();
 	}
 
 	/**
 	 * This function is called periodically during test mode
 	 */
 	public void testPeriodic() {
+		
 
 	}
 
@@ -266,10 +275,10 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Funnel Left", funnelLeft.get());
 		SmartDashboard.putNumber("Funnel Right", funnelRight.get());
 		SmartDashboard.putNumber("Lift", lift.get());
-		SmartDashboard.putNumber("Funnel Left Axis", shmoStick.getRawAxis(1));
-		SmartDashboard.putNumber("Funnel Right Axis", shmoStick.getRawAxis(5));
-		SmartDashboard.putNumber("Lift Up", shmoStick.getRawAxis(4));
-		SmartDashboard.putNumber("Lift Down", shmoStick.getRawAxis(5));
+		SmartDashboard.putNumber("Funnel Left Axis", shmoStick.getRawAxis(FUNNEL_LEFT_AXIS));
+		SmartDashboard.putNumber("Funnel Right Axis", shmoStick.getRawAxis(FUNNEL_RIGHT_AXIS));
+		SmartDashboard.putNumber("Lift Up", shmoStick.getRawAxis(LIFTER_UP_AXIS));
+		SmartDashboard.putNumber("Lift Down", shmoStick.getRawAxis(LIFTER_DOWN_AXIS));
 		SmartDashboard.putBoolean("Clamp Button", clampButton.get());
 		SmartDashboard.putBoolean("Compressor Button", startCompressor.get());
 		SmartDashboard.putBoolean("Lift to step button", stepLift.get());
