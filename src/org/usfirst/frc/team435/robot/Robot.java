@@ -465,7 +465,7 @@ public class Robot extends IterativeRobot {
 			}
 			lastCompressorButtonState = true;
 		}
-		// updateDashboard();
+		updateDashboard();
 	}
 
 	/**
@@ -510,7 +510,7 @@ public class Robot extends IterativeRobot {
 					}
 					break;
 				case CLAMPED:
-					if(toteHeight.get()){
+					if((!toteHeight.get()) && !(inBay.get())){
 						state = Tote_State.LIFTED;
 						lift.set(0);
 					}
