@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.Joystick;
@@ -28,33 +29,28 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Robot extends IterativeRobot {
 
 	enum AutoChoice {
-		DRIVE_FORWARD,
-		PICK_UP_TOTE,
-		PICK_UP_TOTE_TRASH,
-		PICK_UP_RECYCLE_MIDDLE,
-		PICK_UP_TOTES_VISION,
-		PICK_UP_ALL
+		DRIVE_FORWARD, PICK_UP_TOTE, PICK_UP_TOTE_TRASH, PICK_UP_RECYCLE_MIDDLE, PICK_UP_TOTES_VISION, PICK_UP_ALL
 	};
 
+	enum Finite_Mode {
+		IN, OUT, CLAMP_LIFT, UNCLAMP_DROP, OFF,
+	}
+
 	enum Tote_State {
-		EMPTY ("Empty"),
-		IN_FUNNEL ("In Funnel"),
-		IN_BAY ("In Bay"),
-		CLAMPED ("Clamped"),
-		PRECLAMPED ("Pre-Clamped"),
-		LIFTED ("Lifted");
-		
+		EMPTY("Empty"), IN_FUNNEL("In Funnel"), IN_BAY("In Bay"), CLAMPED(
+				"Clamped"), PRECLAMPED("Pre-Clamped"), LIFTED("Lifted");
+
 		private final String name;
-		
-		private Tote_State(String s){
+
+		private Tote_State(String s) {
 			name = s;
 		}
-		
-		public String toString(){
+
+		public String toString() {
 			return name;
 		}
 	};
-	
+
 	Timer clampTimer = new Timer();
 	// USBCamera camera;
 	// --Drive Motors--
@@ -64,7 +60,8 @@ public class Robot extends IterativeRobot {
 	Jaguar funnelLeft, funnelRight;
 	// --Lift Components--
 	Talon lift;
-	DigitalInput upperLimit, lowerLimit, stepHeight, toteHeight, inFunnel, inBay;
+	DigitalInput upperLimit, lowerLimit, stepHeight, toteHeight, inFunnel,
+			inBay;
 	DoubleSolenoid leftClamp, rightClamp;
 	// -- OI --
 	Joystick driveStick, shmoStick;
@@ -82,7 +79,7 @@ public class Robot extends IterativeRobot {
 	public boolean lastCompressorButtonState = false; // Compressor Button State
 														// Holding
 	public boolean compressorOn = true; // Compressor State
-	boolean finiteEnabled = false;
+	Finite_Mode finiteMode = Finite_Mode.OFF;
 	boolean alreadyClicked = false; // for clamper state holding
 	public AutoChoice autoMode = AutoChoice.DRIVE_FORWARD;
 
@@ -128,20 +125,24 @@ public class Robot extends IterativeRobot {
 			boolean softIsTop) {
 		boolean tops = false;
 		boolean bottoms = false;
-		if(softIsTop){
+		if (softIsTop) {
 			tops = (hardTop.get() || soft.get());
 			bottoms = hardBottom.get();
-		} else{
+		} else {
 			tops = hardTop.get();
 			bottoms = (hardBottom.get() || soft.get());
 		}
-		if(speed > 0 && !tops){
+		if (speed > 0 && !tops) {
 			speedController.set(speed);
-		} else if(speed <0 && !bottoms){
+		} else if (speed < 0 && !bottoms) {
 			speedController.set(speed);
-		} else{
+		} else {
 			speedController.set(0);
 		}
+	}
+	public void safeMotorSet(SpeedController speedController, double speed, DigitalInput hardBottom,DigitalInput hardTop)
+	{
+		safeMotorSet(speedController, speed, hardBottom, hardTop, hardTop, true);
 	}
 
 	@Override
@@ -273,8 +274,8 @@ public class Robot extends IterativeRobot {
 				lift.set(0);
 				leftClamp.set(Value.kReverse);
 				rightClamp.set(Value.kReverse);
-				funnelLeft.set(-.1);
-				funnelRight.set(-.1);
+				funnelLeft.set(-AUTO_FUNNEL_SPEED/5);
+				funnelRight.set(-AUTO_FUNNEL_SPEED/5);
 				drive.mecanumDrive_Cartesian(0, -.5, 0, 0);
 			} else {
 				funnelLeft.set(0);
@@ -412,57 +413,81 @@ public class Robot extends IterativeRobot {
 		double twistdrive = driveStick.getZ();
 		double funnelLeftOp = shmoStick.getRawAxis(FUNNEL_LEFT_AXIS);
 		double funnelRightOp = shmoStick.getRawAxis(FUNNEL_RIGHT_AXIS);
-		
 
 		// drive Operation
 		if (driveStick.getTrigger()) {
 			// Half speed
 			// @formatter:off;
-			drive.mecanumDrive_Cartesian(calc(xdrive / 2), calc(ydrive / 2),
-					calc(twistdrive / 2), 0);
+			drive.mecanumDrive_Cartesian(
+					calc(xdrive / 2), 
+					calc(ydrive / 2),
+					calc(twistdrive / 2), 
+					0);
 		} else {
-			drive.mecanumDrive_Cartesian(calc(xdrive), calc(ydrive),
-					calc(twistdrive), 0);
+			drive.mecanumDrive_Cartesian(
+					calc(xdrive), 
+					calc(ydrive),
+					calc(twistdrive), 
+					0);
 			// @formatter:on;
 		}
-		//Finite State (mapped to POV up and stopped at a shmo action)
-		
-		if(shmoStick.getPOV() == 0 && finiteEnabled == false){
-			finiteEnabled = true;
-		} else if(shmoStick.getPOV() == 0 && finiteEnabled == false){
-			finiteEnabled = false;
+		// Finite State (mapped to POV up and stopped at a shmo action)
+
+		if (shmoStick.getPOV() == 0 && finiteMode != Finite_Mode.IN) {
+			finiteMode = Finite_Mode.IN;
+		} else if (shmoStick.getPOV() == 0 && finiteMode == Finite_Mode.IN) {
+			finiteMode = Finite_Mode.OFF;
 		}
-			
-		if(finiteEnabled){
+
+		if (shmoStick.getPOV() == 180 && finiteMode != Finite_Mode.OUT) {
+			finiteMode = Finite_Mode.OUT;
+		} else if (shmoStick.getPOV() == 180 && finiteMode == Finite_Mode.OUT) {
+			finiteMode = Finite_Mode.OFF;
+		}
+
+		if (shmoStick.getBumper(Hand.kRight)
+				&& finiteMode != Finite_Mode.CLAMP_LIFT) {
+			finiteMode = Finite_Mode.CLAMP_LIFT;
+			state = Tote_State.IN_BAY;
+		} else if (shmoStick.getBumper(Hand.kRight)
+				&& finiteMode == Finite_Mode.CLAMP_LIFT) {
+			finiteMode = Finite_Mode.OFF;
+		}
+
+		if (shmoStick.getBumper(Hand.kLeft)
+				&& finiteMode != Finite_Mode.UNCLAMP_DROP) {
+			state = Tote_State.IN_BAY;
+			finiteMode = Finite_Mode.UNCLAMP_DROP;
+		} else if (shmoStick.getBumper(Hand.kLeft)
+				&& finiteMode == Finite_Mode.UNCLAMP_DROP) {
+			finiteMode = Finite_Mode.OFF;
+		}
+
+		// Funnel Operation
+		funnelLeft.set(funnelLeftOp); // left motor left joystick up/down
+		funnelRight.set(funnelRightOp);// right motor right joystick up/down
+
+		// Lifter Clamping
+		clampClicking();
+
+		// Lifter Lifting
+		double up = shmoStick.getRawAxis(LIFTER_UP_AXIS);
+		double down = shmoStick.getRawAxis(LIFTER_DOWN_AXIS);
+		if (down < DEADBAND) {
+			safeMotorSet(lift, up * THREADED_ROD_MULT, lowerLimit, upperLimit);
+		} else {
+			safeMotorSet(lift, -down * THREADED_ROD_MULT, lowerLimit, upperLimit);
+		}
+
+		// lift to step
+		if (stepLift.get()) {
+			safeMotorSet(lift, AUTO_LIFT_SPEED, lowerLimit, upperLimit, stepHeight, true);
+		}
+
+		if (finiteMode != Finite_Mode.OFF) { // override teleop commands
 			finiteStateMachine();
-			
 		}
-		else {
-			// Funnel Operation
-			funnelLeft.set(funnelLeftOp); // left motor left joystick up/down
-			funnelRight.set(funnelRightOp);// right motor right joystick up/down
 
-			// Lifter Clamping
-			clampClicking();
-
-			// Lifter Lifting
-			double up = shmoStick.getRawAxis(LIFTER_UP_AXIS);
-			double down = shmoStick.getRawAxis(LIFTER_DOWN_AXIS);
-			if (!upperLimit.get() && down == 0) {
-				lift.set(up * THREADED_ROD_MULT);
-			} else if (!lowerLimit.get() && up == 0) {
-				lift.set(down * -THREADED_ROD_MULT);
-			} else {
-				lift.set(0);
-			}
-
-			// lift to step
-			if (stepLift.get() && !stepHeight.get()) {
-				lift.set(.3 * THREADED_ROD_MULT);
-			}
-
-		}
-		
 		// Compressor Toggle
 		if (startCompressor.get() && !lastCompressorButtonState) {
 			if (compressorOn) {
@@ -483,53 +508,116 @@ public class Robot extends IterativeRobot {
 	}
 
 	public void finiteStateMachine() {
-				switch(state){
-				case EMPTY:
-					if(inFunnel.get()){
-						state = Tote_State.IN_FUNNEL;
+		if (finiteMode == Finite_Mode.IN
+				|| finiteMode == Finite_Mode.CLAMP_LIFT) {
+			switch (state) {
+			case EMPTY:
+				if (inFunnel.get()) {
+					state = Tote_State.IN_FUNNEL;
+				}
+				break;
+			case IN_FUNNEL:
+				if (!inBay.get()) {
+					funnelLeft.set(AUTO_FUNNEL_SPEED);
+					funnelRight.set(AUTO_FUNNEL_SPEED);
+				} else {
+					funnelLeft.set(0);
+					funnelRight.set(0);
+					state = Tote_State.IN_BAY;
+				}
+				break;
+			case IN_BAY:
+				if (!lowerLimit.get()) {
+					safeMotorSet(lift, -1, lowerLimit, upperLimit, toteHeight,
+							true);
+					if (toteHeight.get()) {
+						unclamp();
 					}
-					break;
-				case IN_FUNNEL:
-					if(!inBay.get()){
-						funnelLeft.set(AUTO_FUNNEL_SPEED);
-						funnelRight.set(AUTO_FUNNEL_SPEED);
+				} else {
+					lift.set(0);
+					clamp();
+					clampTimer.start();
+					state = Tote_State.PRECLAMPED;
+				}
+				break;
+			case PRECLAMPED:
+				if (clampTimer.get() > .5) {
+					state = Tote_State.CLAMPED;
+					clampTimer.stop();
+					clampTimer.reset();
+				}
+				break;
+			case CLAMPED:
+				if ((!toteHeight.get()) && !(inBay.get())) {
+					state = Tote_State.LIFTED;
+					lift.set(0);
+				}
+				safeMotorSet(lift, AUTO_LIFT_SPEED, lowerLimit, upperLimit,
+						toteHeight, true);
+				break;
+			case LIFTED:
+				if (finiteMode == Finite_Mode.CLAMP_LIFT) {
+					finiteMode = Finite_Mode.OFF;
+				}
+				state = Tote_State.EMPTY;
+				break;
+			}
+		} else if (finiteMode == Finite_Mode.OUT
+				|| finiteMode == Finite_Mode.UNCLAMP_DROP) {
+			switch (state) {
+			case LIFTED:
+				if (inBay.get()) {
+					if (!toteHeight.get()) {
+						safeMotorSet(lift, -AUTO_LIFT_SPEED, lowerLimit,
+								upperLimit, toteHeight, false);
+					} else {
+						unclamp();
+						state = Tote_State.PRECLAMPED;						
+					}
+				} else {
+					if(!lowerLimit.get()){
+						safeMotorSet(lift, -AUTO_LIFT_SPEED, lowerLimit, upperLimit);
 					} else{
-						funnelLeft.set(0);
-						funnelRight.set(0);
+						unclamp();
+						state = Tote_State.PRECLAMPED;
+						clampTimer.start();
+					}
+				}
+			case PRECLAMPED:
+				if(clampTimer.get() > .5){
+					if (!lowerLimit.get()) {
+						safeMotorSet(lift, -AUTO_LIFT_SPEED, lowerLimit,
+								upperLimit, lowerLimit, false);
+					} else {
 						state = Tote_State.IN_BAY;
 					}
-					break;
-				case IN_BAY:
-					if(!lowerLimit.get()){
-						safeMotorSet(lift, -1, lowerLimit, upperLimit, toteHeight, true);
-						if(toteHeight.get()){
-							unclamp();							
-						}
-					} else{
-						lift.set(0);
-						clamp();
-						clampTimer.start();
-						state = Tote_State.PRECLAMPED;
-					}					
-					break;
-				case PRECLAMPED:
-					if(clampTimer.get() > .5){
-						state = Tote_State.CLAMPED;
-						clampTimer.stop();
-						clampTimer.reset();
-					}
-					break;
-				case CLAMPED:
-					if((!toteHeight.get()) && !(inBay.get())){
-						state = Tote_State.LIFTED;
-						lift.set(0);
-					}
-					safeMotorSet(lift, AUTO_LIFT_SPEED, lowerLimit, upperLimit, toteHeight, true);
-					break;
-				case LIFTED:
-					state = Tote_State.EMPTY;
-					break;
 				}
+			
+			case IN_BAY:
+				if(finiteMode == Finite_Mode.UNCLAMP_DROP){
+					finiteMode = Finite_Mode.OFF;
+					state = Tote_State.EMPTY;
+				} else{
+					if(!inFunnel.get()){
+						funnelLeft.set(-AUTO_FUNNEL_SPEED);
+						funnelRight.set(-AUTO_FUNNEL_SPEED);
+					} else{
+						state = Tote_State.IN_FUNNEL;
+					}
+				}
+			case IN_FUNNEL:
+				if(inFunnel.get()){
+					funnelLeft.set(-1);
+					funnelRight.set(-1);
+				} else{
+					state = Tote_State.EMPTY;
+				}
+			case EMPTY:
+				// possible changing finite mode
+			case CLAMPED:
+				state = Tote_State.LIFTED;
+			}
+		}
 	}
 
 	public void updateDashboard() {
@@ -539,8 +627,7 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putBoolean("Upper Limit", upperLimit.get());
 		SmartDashboard.putBoolean("Lower Limit", lowerLimit.get());
 		SmartDashboard.putBoolean("Step Height", stepHeight.get());
-		SmartDashboard.putBoolean("Finite Enabled", finiteEnabled);
-//		SmartDashboard.putBoolean("Compressor State", compressor.enabled());
+		// SmartDashboard.putBoolean("Compressor State", compressor.enabled());
 		SmartDashboard.putNumber("Drive X", driveStick.getX());
 		SmartDashboard.putNumber("Drive Y", driveStick.getY());
 		SmartDashboard.putNumber("Drive Z", driveStick.getZ());
@@ -563,6 +650,7 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putBoolean("Compressor Button", startCompressor.get());
 		SmartDashboard.putBoolean("Lift to step button", stepLift.get());
 		SmartDashboard.putString("Finite State", state.toString());
-		
+		SmartDashboard.putString("Finite Mode", finiteMode.toString());
+
 	}
 }
