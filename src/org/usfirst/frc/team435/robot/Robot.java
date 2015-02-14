@@ -82,6 +82,7 @@ public class Robot extends IterativeRobot {
 	public boolean lastCompressorButtonState = false; // Compressor Button State
 														// Holding
 	public boolean compressorOn = true; // Compressor State
+	boolean finiteEnabled = false;
 	boolean alreadyClicked = false; // for clamper state holding
 	public AutoChoice autoMode = AutoChoice.DRIVE_FORWARD;
 
@@ -411,7 +412,7 @@ public class Robot extends IterativeRobot {
 		double twistdrive = driveStick.getZ();
 		double funnelLeftOp = shmoStick.getRawAxis(FUNNEL_LEFT_AXIS);
 		double funnelRightOp = shmoStick.getRawAxis(FUNNEL_RIGHT_AXIS);
-		boolean finiteEnabled = false;
+		
 
 		// drive Operation
 		if (driveStick.getTrigger()) {
@@ -432,30 +433,36 @@ public class Robot extends IterativeRobot {
 			finiteEnabled = false;
 		}
 			
-
-		// Funnel Operation
-		funnelLeft.set(funnelLeftOp); // left motor left joystick up/down
-		funnelRight.set(funnelRightOp);// right motor right joystick up/down
-
-		// Lifter Clamping
-		clampClicking();
-
-		// Lifter Lifting
-		double up = shmoStick.getRawAxis(LIFTER_UP_AXIS);
-		double down = shmoStick.getRawAxis(LIFTER_DOWN_AXIS);
-		if (!upperLimit.get() && down == 0) {
-			lift.set(up * THREADED_ROD_MULT);
-		} else if (!lowerLimit.get() && up == 0) {
-			lift.set(down * -THREADED_ROD_MULT);
-		} else {
-			lift.set(0);
+		if(finiteEnabled){
+			finiteStateMachine();
+			
 		}
+		else {
+			// Funnel Operation
+			funnelLeft.set(funnelLeftOp); // left motor left joystick up/down
+			funnelRight.set(funnelRightOp);// right motor right joystick up/down
 
-		// lift to step
-		if (stepLift.get() && !stepHeight.get()) {
-			lift.set(.3 * THREADED_ROD_MULT);
+			// Lifter Clamping
+			clampClicking();
+
+			// Lifter Lifting
+			double up = shmoStick.getRawAxis(LIFTER_UP_AXIS);
+			double down = shmoStick.getRawAxis(LIFTER_DOWN_AXIS);
+			if (!upperLimit.get() && down == 0) {
+				lift.set(up * THREADED_ROD_MULT);
+			} else if (!lowerLimit.get() && up == 0) {
+				lift.set(down * -THREADED_ROD_MULT);
+			} else {
+				lift.set(0);
+			}
+
+			// lift to step
+			if (stepLift.get() && !stepHeight.get()) {
+				lift.set(.3 * THREADED_ROD_MULT);
+			}
+
 		}
-
+		
 		// Compressor Toggle
 		if (startCompressor.get() && !lastCompressorButtonState) {
 			if (compressorOn) {
@@ -478,6 +485,9 @@ public class Robot extends IterativeRobot {
 	public void finiteStateMachine() {
 				switch(state){
 				case EMPTY:
+					if(inFunnel.get()){
+						state = Tote_State.IN_FUNNEL;
+					}
 					break;
 				case IN_FUNNEL:
 					if(!inBay.get()){
@@ -517,6 +527,7 @@ public class Robot extends IterativeRobot {
 					safeMotorSet(lift, AUTO_LIFT_SPEED, lowerLimit, upperLimit, toteHeight, true);
 					break;
 				case LIFTED:
+					state = Tote_State.EMPTY;
 					break;
 				}
 	}
@@ -528,7 +539,8 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putBoolean("Upper Limit", upperLimit.get());
 		SmartDashboard.putBoolean("Lower Limit", lowerLimit.get());
 		SmartDashboard.putBoolean("Step Height", stepHeight.get());
-		SmartDashboard.putBoolean("Compressor State", compressor.enabled());
+		SmartDashboard.putBoolean("Finite Enabled", finiteEnabled);
+//		SmartDashboard.putBoolean("Compressor State", compressor.enabled());
 		SmartDashboard.putNumber("Drive X", driveStick.getX());
 		SmartDashboard.putNumber("Drive Y", driveStick.getY());
 		SmartDashboard.putNumber("Drive Z", driveStick.getZ());
@@ -551,5 +563,6 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putBoolean("Compressor Button", startCompressor.get());
 		SmartDashboard.putBoolean("Lift to step button", stepLift.get());
 		SmartDashboard.putString("Finite State", state.toString());
+		
 	}
 }
