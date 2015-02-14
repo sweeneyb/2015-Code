@@ -37,12 +37,22 @@ public class Robot extends IterativeRobot {
 	};
 
 	enum Tote_State {
-		EMPTY,
-		IN_FUNNEL,
-		IN_BAY,
-		CLAMPED,
-		PRECLAMPED,
-		LIFTED
+		EMPTY ("Empty"),
+		IN_FUNNEL ("In Funnel"),
+		IN_BAY ("In Bay"),
+		CLAMPED ("Clamped"),
+		PRECLAMPED ("Pre-Clamped"),
+		LIFTED ("Lifted");
+		
+		private final String name;
+		
+		private Tote_State(String s){
+			name = s;
+		}
+		
+		public String toString(){
+			return name;
+		}
 	};
 	
 	Timer clampTimer = new Timer();
@@ -401,6 +411,7 @@ public class Robot extends IterativeRobot {
 		double twistdrive = driveStick.getZ();
 		double funnelLeftOp = shmoStick.getRawAxis(FUNNEL_LEFT_AXIS);
 		double funnelRightOp = shmoStick.getRawAxis(FUNNEL_RIGHT_AXIS);
+		boolean finiteEnabled = false;
 
 		// drive Operation
 		if (driveStick.getTrigger()) {
@@ -413,6 +424,14 @@ public class Robot extends IterativeRobot {
 					calc(twistdrive), 0);
 			// @formatter:on;
 		}
+		//Finite State (mapped to POV up and stopped at a shmo action)
+		
+		if(shmoStick.getPOV() == 0 && finiteEnabled == false){
+			finiteEnabled = true;
+		} else if(shmoStick.getPOV() == 0 && finiteEnabled == false){
+			finiteEnabled = false;
+		}
+			
 
 		// Funnel Operation
 		funnelLeft.set(funnelLeftOp); // left motor left joystick up/down
@@ -531,5 +550,6 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putBoolean("Clamp Button", clampButton.get());
 		SmartDashboard.putBoolean("Compressor Button", startCompressor.get());
 		SmartDashboard.putBoolean("Lift to step button", stepLift.get());
+		SmartDashboard.putString("Finite State", state.toString());
 	}
 }
