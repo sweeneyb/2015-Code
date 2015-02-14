@@ -1,5 +1,9 @@
 <xml version="1.0">
 <dashboard>
+	<widget field="Finite Enabled" type="Boolean" class="edu.wpi.first.smartdashboard.gui.elements.BooleanBox">
+		<location x="382" y="213"/>
+		<width>77</width>
+	</widget>
 	<static-widget class="edu.wpi.first.smartdashboard.gui.elements.Label">
 		<location x="868" y="384"/>
 		<width>108</width>
