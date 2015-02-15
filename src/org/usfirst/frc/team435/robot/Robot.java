@@ -236,6 +236,14 @@ public class Robot extends IterativeRobot {
 	/**
 	 * This function is called periodically during autonomous
 	 */
+	public void disabledPeriodic() {
+		lift.set(0);
+		drive.mecanumDrive_Cartesian(0, 0, 0, 0);
+		funnelLeft.set(0);
+		funnelRight.set(0);
+		updateDashboard();
+	}
+	
 	public void autonomousPeriodic() {
 		switch (autoMode) {
 		case DRIVE_FORWARD:
@@ -413,6 +421,12 @@ public class Robot extends IterativeRobot {
 		double twistdrive = driveStick.getZ();
 		double funnelLeftOp = shmoStick.getRawAxis(FUNNEL_LEFT_AXIS);
 		double funnelRightOp = shmoStick.getRawAxis(FUNNEL_RIGHT_AXIS);
+		boolean userInterference = (shmoStick.getRawButton(1)
+									|| shmoStick.getRawButton(2)
+									|| shmoStick.getRawButton(3)
+									|| shmoStick.getRawButton(4))
+									|| shmoStick.getRawAxis(3) > DEADBAND
+									|| shmoStick.getRawAxis(2) > DEADBAND;
 
 		// drive Operation
 		if (driveStick.getTrigger()) {
@@ -435,13 +449,15 @@ public class Robot extends IterativeRobot {
 
 		if (shmoStick.getPOV() == 0 && finiteMode != Finite_Mode.IN) {
 			finiteMode = Finite_Mode.IN;
-		} else if (shmoStick.getPOV() == 0 && finiteMode == Finite_Mode.IN) {
+		} else if ((shmoStick.getPOV() == 0 && finiteMode == Finite_Mode.IN) ||
+				userInterference) {
 			finiteMode = Finite_Mode.OFF;
 		}
 
 		if (shmoStick.getPOV() == 180 && finiteMode != Finite_Mode.OUT) {
 			finiteMode = Finite_Mode.OUT;
-		} else if (shmoStick.getPOV() == 180 && finiteMode == Finite_Mode.OUT) {
+		} else if (shmoStick.getPOV() == 180 && finiteMode == Finite_Mode.OUT ||
+				userInterference) {
 			finiteMode = Finite_Mode.OFF;
 		}
 
