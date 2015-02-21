@@ -45,8 +45,12 @@ public class FiniteState {
 		
 		public void runState(Robot robot) {
 			// logic probably backwards
-			if(robot.inFunnel) {
-				robot.robotState = transition(new ToteFoundInFunnel());
+			if(robot.inFunnel.get()) {
+				try {
+					robot.robotState = transition(new ToteFoundInFunnel());
+				} catch (TransitionException e) {
+					// send a message to the dashboard?
+				}
 			}
 			// if no tote, stay in this state
 		}

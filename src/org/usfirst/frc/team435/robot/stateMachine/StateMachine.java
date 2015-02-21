@@ -5,6 +5,7 @@ import org.usfirst.frc.team435.robot.stateMachine.FiniteState.OffState;
 import org.usfirst.frc.team435.robot.stateMachine.FiniteState.OutState;
 
 
+//XXX Remove this class?
 public class StateMachine {
 	enum FiniteMode {
 		IN(InState.getInstance()), OUT(OutState.getInstance()), OFF(OffState.getInstance()); //CLAMP_LIFT, UNCLAMP_DROP, OFF,
@@ -18,7 +19,7 @@ public class StateMachine {
 	
 	private FiniteMode state = FiniteMode.OFF;
 	
-	public void transition(FiniteMode from, FiniteMode to) throws TransitionException {
-		from.state.transition(to.state);
-	}
+//	public void transition(FiniteMode from, FiniteMode to) throws TransitionException {
+//		from.state.transition(to.state);
+//	}
 }
