@@ -1,6 +1,7 @@
 package org.usfirst.frc.team435.robot;
 
 import org.usfirst.frc.team435.robot.stateMachine.FiniteState;
+import org.usfirst.frc.team435.robot.stateMachine.TransitionException;
 
 import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.Compressor;
@@ -60,10 +61,12 @@ public class Robot extends IterativeRobot {
 	SpeedController backLeft, frontLeft, frontRight, backRight;
 	// --Funnel Components--
 	Jaguar funnelLeft, funnelRight;
+	protected double funnelLeftOp ;
+	protected double funnelRightOp;
 	// --Lift Components--
 	Talon lift;
-	public DigitalInput upperLimit, lowerLimit, stepHeight, toteHeight, inFunnel,
-			inBay;
+	public DigitalInput upperLimit, lowerLimit, stepHeight, toteHeight,
+			inFunnel, inBay;
 	DoubleSolenoid leftClamp, rightClamp;
 	// -- OI --
 	Joystick driveStick, shmoStick;
@@ -95,7 +98,7 @@ public class Robot extends IterativeRobot {
 	static final int FUNNEL_RIGHT_AXIS = 5;
 	static final int THREADED_ROD_MULT = 1; // multiplier so we don't go up too
 											// fast
-	
+
 	public FiniteState robotState = FiniteState.OutState.getInstance();
 
 	// Standard Methods
@@ -144,8 +147,9 @@ public class Robot extends IterativeRobot {
 			speedController.set(0);
 		}
 	}
-	public void safeMotorSet(SpeedController speedController, double speed, DigitalInput hardBottom,DigitalInput hardTop)
-	{
+
+	public void safeMotorSet(SpeedController speedController, double speed,
+			DigitalInput hardBottom, DigitalInput hardTop) {
 		safeMotorSet(speedController, speed, hardBottom, hardTop, hardTop, true);
 	}
 
@@ -235,7 +239,7 @@ public class Robot extends IterativeRobot {
 		startCompressor = new JoystickButton(shmoStick, 8);
 		stepLift = new JoystickButton(shmoStick, 2);
 		// camera = new USBCamera();
-		
+
 	}
 
 	/**
@@ -248,7 +252,7 @@ public class Robot extends IterativeRobot {
 		funnelRight.set(0);
 		updateDashboard();
 	}
-	
+
 	public void autonomousPeriodic() {
 		switch (autoMode) {
 		case DRIVE_FORWARD:
@@ -287,8 +291,8 @@ public class Robot extends IterativeRobot {
 				lift.set(0);
 				leftClamp.set(Value.kReverse);
 				rightClamp.set(Value.kReverse);
-				funnelLeft.set(-AUTO_FUNNEL_SPEED/5);
-				funnelRight.set(-AUTO_FUNNEL_SPEED/5);
+				funnelLeft.set(-AUTO_FUNNEL_SPEED / 5);
+				funnelRight.set(-AUTO_FUNNEL_SPEED / 5);
 				drive.mecanumDrive_Cartesian(0, -.5, 0, 0);
 			} else {
 				funnelLeft.set(0);
@@ -424,48 +428,44 @@ public class Robot extends IterativeRobot {
 		double xdrive = driveStick.getX();
 		double ydrive = driveStick.getY();
 		double twistdrive = driveStick.getZ();
-		double funnelLeftOp = shmoStick.getRawAxis(FUNNEL_LEFT_AXIS);
-		double funnelRightOp = shmoStick.getRawAxis(FUNNEL_RIGHT_AXIS);
+		funnelLeftOp = shmoStick.getRawAxis(FUNNEL_LEFT_AXIS);
+		funnelRightOp = shmoStick.getRawAxis(FUNNEL_RIGHT_AXIS);
 		boolean userInterference = (shmoStick.getRawButton(1)
-									|| shmoStick.getRawButton(2)
-									|| shmoStick.getRawButton(3)
-									|| shmoStick.getRawButton(4))
-									|| shmoStick.getRawAxis(3) > DEADBAND
-									|| shmoStick.getRawAxis(2) > DEADBAND;
+				|| shmoStick.getRawButton(2) || shmoStick.getRawButton(3) || shmoStick
+					.getRawButton(4))
+				|| shmoStick.getRawAxis(3) > DEADBAND
+				|| shmoStick.getRawAxis(2) > DEADBAND;
 
 		// drive Operation
 		if (driveStick.getTrigger()) {
 			// Half speed
 			// @formatter:off;
-			drive.mecanumDrive_Cartesian(
-					calc(xdrive / 2), 
-					calc(ydrive / 2),
-					calc(twistdrive / 2), 
-					0);
+			drive.mecanumDrive_Cartesian(calc(xdrive / 2), calc(ydrive / 2),
+					calc(twistdrive / 2), 0);
 		} else {
-			drive.mecanumDrive_Cartesian(
-					calc(xdrive), 
-					calc(ydrive),
-					calc(twistdrive), 
-					0);
+			drive.mecanumDrive_Cartesian(calc(xdrive), calc(ydrive),
+					calc(twistdrive), 0);
 			// @formatter:on;
 		}
-		
-		robotState.runState(this);
-		
+		try {
+			robotState.runState(this);
+		} catch (TransitionException e) {
+			// XXX do meaningful state reset
+		}
+
 		// Finite State (mapped to POV up and stopped at a shmo action)
 
 		if (shmoStick.getPOV() == 0 && finiteMode != Finite_Mode.IN) {
 			finiteMode = Finite_Mode.IN;
-		} else if ((shmoStick.getPOV() == 0 && finiteMode == Finite_Mode.IN) ||
-				userInterference) {
+		} else if ((shmoStick.getPOV() == 0 && finiteMode == Finite_Mode.IN)
+				|| userInterference) {
 			finiteMode = Finite_Mode.OFF;
 		}
 
 		if (shmoStick.getPOV() == 180 && finiteMode != Finite_Mode.OUT) {
 			finiteMode = Finite_Mode.OUT;
-		} else if (shmoStick.getPOV() == 180 && finiteMode == Finite_Mode.OUT ||
-				userInterference) {
+		} else if (shmoStick.getPOV() == 180 && finiteMode == Finite_Mode.OUT
+				|| userInterference) {
 			finiteMode = Finite_Mode.OFF;
 		}
 
@@ -487,9 +487,7 @@ public class Robot extends IterativeRobot {
 			finiteMode = Finite_Mode.OFF;
 		}
 
-		// Funnel Operation
-		funnelLeft.set(funnelLeftOp); // left motor left joystick up/down
-		funnelRight.set(funnelRightOp);// right motor right joystick up/down
+		runFunnel();
 
 		// Lifter Clamping
 		clampClicking();
@@ -500,12 +498,14 @@ public class Robot extends IterativeRobot {
 		if (down < DEADBAND) {
 			safeMotorSet(lift, up * THREADED_ROD_MULT, lowerLimit, upperLimit);
 		} else {
-			safeMotorSet(lift, -down * THREADED_ROD_MULT, lowerLimit, upperLimit);
+			safeMotorSet(lift, -down * THREADED_ROD_MULT, lowerLimit,
+					upperLimit);
 		}
 
 		// lift to step
 		if (stepLift.get()) {
-			safeMotorSet(lift, AUTO_LIFT_SPEED, lowerLimit, upperLimit, stepHeight, true);
+			safeMotorSet(lift, AUTO_LIFT_SPEED, lowerLimit, upperLimit,
+					stepHeight, true);
 		}
 
 		if (finiteMode != Finite_Mode.OFF) { // override teleop commands
@@ -522,6 +522,12 @@ public class Robot extends IterativeRobot {
 			lastCompressorButtonState = true;
 		}
 		updateDashboard();
+	}
+
+	public void runFunnel() {
+		// Funnel Operation
+		funnelLeft.set(funnelLeftOp); // left motor left joystick up/down
+		funnelRight.set(funnelRightOp);// right motor right joystick up/down
 	}
 
 	/**
@@ -596,19 +602,20 @@ public class Robot extends IterativeRobot {
 								upperLimit, toteHeight, false);
 					} else {
 						unclamp();
-						state = Tote_State.PRECLAMPED;						
+						state = Tote_State.PRECLAMPED;
 					}
 				} else {
-					if(!lowerLimit.get()){
-						safeMotorSet(lift, -AUTO_LIFT_SPEED, lowerLimit, upperLimit);
-					} else{
+					if (!lowerLimit.get()) {
+						safeMotorSet(lift, -AUTO_LIFT_SPEED, lowerLimit,
+								upperLimit);
+					} else {
 						unclamp();
 						state = Tote_State.PRECLAMPED;
 						clampTimer.start();
 					}
 				}
 			case PRECLAMPED:
-				if(clampTimer.get() > .5){
+				if (clampTimer.get() > .5) {
 					if (!lowerLimit.get()) {
 						safeMotorSet(lift, -AUTO_LIFT_SPEED, lowerLimit,
 								upperLimit, lowerLimit, false);
@@ -616,24 +623,24 @@ public class Robot extends IterativeRobot {
 						state = Tote_State.IN_BAY;
 					}
 				}
-			
+
 			case IN_BAY:
-				if(finiteMode == Finite_Mode.UNCLAMP_DROP){
+				if (finiteMode == Finite_Mode.UNCLAMP_DROP) {
 					finiteMode = Finite_Mode.OFF;
 					state = Tote_State.EMPTY;
-				} else{
-					if(!inFunnel.get()){
+				} else {
+					if (!inFunnel.get()) {
 						funnelLeft.set(-AUTO_FUNNEL_SPEED);
 						funnelRight.set(-AUTO_FUNNEL_SPEED);
-					} else{
+					} else {
 						state = Tote_State.IN_FUNNEL;
 					}
 				}
 			case IN_FUNNEL:
-				if(inFunnel.get()){
+				if (inFunnel.get()) {
 					funnelLeft.set(-1);
 					funnelRight.set(-1);
-				} else{
+				} else {
 					state = Tote_State.EMPTY;
 				}
 			case EMPTY:

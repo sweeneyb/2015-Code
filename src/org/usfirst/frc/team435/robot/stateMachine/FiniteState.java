@@ -16,21 +16,21 @@ public class FiniteState {
 		throw new TransitionException(mode);
 	}
 	
-	public void runState(Robot robot) {
+	public void runState(Robot robot) throws TransitionException {
 		// does nothing by default
 	}
 
-	public static class InState extends FiniteState {
-		protected InState(String name) {
-			super(name);
-		}
-
-		private static InState instance = new InState("in");
-
-		public static InState getInstance() {
-			return instance;
-		}
-	}
+//	public static class InState extends FiniteState {
+//		protected InState(String name) {
+//			super(name);
+//		}
+//
+//		private static InState instance = new InState("in");
+//
+//		public static InState getInstance() {
+//			return instance;
+//		}
+//	}
 
 	public static class OutState extends FiniteState {
 		protected OutState(String name) {
@@ -57,7 +57,7 @@ public class FiniteState {
 		
 		public FiniteState transition(ToteFoundInFunnel event)
 				throws TransitionException {
-			return InState.instance;
+			return LoadingInState.instance;
 			
 		}
 	}
