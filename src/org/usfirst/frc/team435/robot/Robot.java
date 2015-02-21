@@ -1,5 +1,7 @@
 package org.usfirst.frc.team435.robot;
 
+import org.usfirst.frc.team435.robot.stateMachine.FiniteState;
+
 import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -60,7 +62,7 @@ public class Robot extends IterativeRobot {
 	Jaguar funnelLeft, funnelRight;
 	// --Lift Components--
 	Talon lift;
-	DigitalInput upperLimit, lowerLimit, stepHeight, toteHeight, inFunnel,
+	public DigitalInput upperLimit, lowerLimit, stepHeight, toteHeight, inFunnel,
 			inBay;
 	DoubleSolenoid leftClamp, rightClamp;
 	// -- OI --
@@ -93,6 +95,8 @@ public class Robot extends IterativeRobot {
 	static final int FUNNEL_RIGHT_AXIS = 5;
 	static final int THREADED_ROD_MULT = 1; // multiplier so we don't go up too
 											// fast
+	
+	public FiniteState robotState = FiniteState.OutState.getInstance();
 
 	// Standard Methods
 	public double calc(double value) { // DEADBAND function
@@ -231,6 +235,7 @@ public class Robot extends IterativeRobot {
 		startCompressor = new JoystickButton(shmoStick, 8);
 		stepLift = new JoystickButton(shmoStick, 2);
 		// camera = new USBCamera();
+		
 	}
 
 	/**
@@ -445,6 +450,9 @@ public class Robot extends IterativeRobot {
 					0);
 			// @formatter:on;
 		}
+		
+		robotState.runState(this);
+		
 		// Finite State (mapped to POV up and stopped at a shmo action)
 
 		if (shmoStick.getPOV() == 0 && finiteMode != Finite_Mode.IN) {
